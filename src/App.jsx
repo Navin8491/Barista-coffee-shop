@@ -8,6 +8,8 @@ import Preloader from './components/Preloader';
 import HomePage from './pages/HomePage';
 import MenuPage from './pages/MenuPage';
 import BlogPage from './pages/BlogPage';
+import BlogDetailPage from './pages/BlogDetailPage';
+import CheckoutPage from './pages/CheckoutPage';
 import ContactPage from './pages/ContactPage';
 import NotFoundPage from './pages/NotFoundPage';
 
@@ -51,6 +53,12 @@ function App() {
     setCartItems((prev) => prev.filter((i) => i.id !== id));
   }, []);
 
+  /* Clear cart */
+  const handleClearCart = useCallback(() => {
+    setCartItems([]);
+    showToast('✅ Order placed successfully!');
+  }, [showToast]);
+
   /* Update quantity */
   const handleUpdateQty = useCallback((id, qty) => {
     if (qty <= 0) {
@@ -82,6 +90,18 @@ function App() {
         <Route path="/"        element={<HomePage    onAddToCart={handleAddToCart} />} />
         <Route path="/menu"    element={<MenuPage    onAddToCart={handleAddToCart} />} />
         <Route path="/blog"    element={<BlogPage />} />
+        <Route path="/blog/:id" element={<BlogDetailPage />} />
+        <Route 
+          path="/checkout" 
+          element={
+            <CheckoutPage 
+              cartItems={cartItems} 
+              onRemove={handleRemove} 
+              onUpdateQty={handleUpdateQty} 
+              onClearCart={handleClearCart} 
+            />
+          } 
+        />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="*"        element={<NotFoundPage />} />
       </Routes>

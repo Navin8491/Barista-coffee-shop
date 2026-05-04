@@ -1,10 +1,17 @@
 import React, { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import './CartSidebar.css';
 
 export default function CartSidebar({ isOpen, onClose, cartItems, onRemove, onUpdateQty }) {
   const sidebarRef = useRef(null);
   const overlayRef = useRef(null);
+  const navigate = useNavigate();
+
+  const handleCheckoutClick = () => {
+    onClose();
+    navigate('/checkout');
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -91,7 +98,7 @@ export default function CartSidebar({ isOpen, onClose, cartItems, onRemove, onUp
               <strong>${subtotal.toFixed(2)}</strong>
             </div>
             <p className="cart-sidebar__note">Shipping calculated at checkout</p>
-            <button className="btn btn-primary cart-sidebar__checkout">
+            <button className="btn btn-primary cart-sidebar__checkout" onClick={handleCheckoutClick}>
               Proceed to Checkout
             </button>
             <button className="btn btn-outline cart-sidebar__continue" onClick={onClose}>

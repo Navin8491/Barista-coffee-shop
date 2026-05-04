@@ -62,9 +62,9 @@ export default function BlogPage() {
                   </div>
                   <h3 className="blog-card__title">{post.title}</h3>
                   <p className="blog-card__excerpt">{post.excerpt}</p>
-                  <a href="#" className="blog-card__link">
+                  <Link to={`/blog/${post.id}`} className="blog-card__link">
                     Read More <span>→</span>
-                  </a>
+                  </Link>
                 </div>
               </article>
             ))}
