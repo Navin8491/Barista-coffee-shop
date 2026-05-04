@@ -1,0 +1,30 @@
+.menu-filter { background: var(--secondary); }
+.menu-filter__tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.menu-filter__tab {
+  padding: 0.55rem 1.4rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  background: var(--white);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.menu-filter__tab:hover { color: var(--primary); border-color: var(--primary); }
+.menu-filter__tab.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.menu-filter__count {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  margin-bottom: 2rem;
+}
+.menu-filter__count strong { color: var(--primary); }

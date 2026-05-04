@@ -1,0 +1,110 @@
+/* ── Product Card ── */
+.product-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* Image */
+.product-card__img-wrap {
+  position: relative;
+  overflow: hidden;
+}
+.product-card__img {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.product-card:hover .product-card__img {
+  transform: scale(1.07);
+}
+
+/* Badge */
+.product-card__badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+}
+
+/* Quick add on hover */
+.product-card__quick-add {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(193,117,61,0.92);
+  color: #fff;
+  padding: 0.65rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  backdrop-filter: blur(4px);
+}
+.product-card:hover .product-card__quick-add {
+  transform: translateY(0);
+}
+
+/* Body */
+.product-card__body {
+  padding: 1.1rem 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 0.35rem;
+}
+.product-card__category {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--primary);
+  font-weight: 700;
+}
+.product-card__name {
+  font-size: 1.1rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1.3;
+}
+.product-card__desc {
+  font-size: 0.82rem;
+  color: var(--gray-500);
+  line-height: 1.55;
+  margin-top: 0.1rem;
+}
+
+/* Footer */
+.product-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+}
+.product-card__price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.product-card__price {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+.product-card__original {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  text-decoration: line-through;
+}
+
+/* Add to cart button */
+.product-card__btn {
+  margin-top: 0.75rem;
+  width: 100%;
+  justify-content: center;
+  padding: 0.6rem 1rem;
+  font-size: 0.88rem;
+}
