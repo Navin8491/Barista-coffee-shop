@@ -168,6 +168,7 @@
   align-items: center;
   gap: 0.5rem;
   margin-left: 0.5rem;
+  flex-shrink: 0;
 }
 
 /* Cart */
@@ -259,12 +260,24 @@
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
+  .navbar .container {
+    padding-right: 0.5rem; /* tighten right edge so hamburger sits flush */
+  }
+
   .navbar__phone {
     display: none;
   }
 
+  /* Push cart + hamburger to the far right since nav is out of flow */
+  .navbar__actions {
+    margin-left: auto;
+  }
+
+  /* Ensure hamburger itself has no extra right spacing */
   .navbar__hamburger {
     display: flex;
+    margin-right: 0;
+    padding-right: 0;
   }
 
   .navbar__nav {
