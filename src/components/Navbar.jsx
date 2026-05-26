@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { navLinks, siteInfo } from '../data/siteData';
@@ -28,17 +28,22 @@ export default function Navbar({ cartCount, onCartOpen }) {
   }, []);
 
   /* Close menu on route change */
-  useEffect(() => setMenuOpen(false), [location]);
+  useEffect(() => {
+    if (menuOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMenuOpen(false);
+    }
+  }, [location, menuOpen]);
 
   return (
     <header
       ref={navRef}
-      className={`navbar${scrolled ? ' navbar--scrolled' : ''}${isHome && !scrolled ? ' navbar--transparent' : ''}`}
+      className={`navbar${scrolled ? ' navbar--scrolled glass' : ''}${isHome && !scrolled ? ' navbar--transparent' : ''}${menuOpen ? ' navbar--open' : ''}`}
     >
       <div className="container navbar__inner">
         {/* Logo */}
         <Link to="/" className="navbar__logo">
-          <span className="navbar__logo-icon">☕</span>
+          <span className="navbar__logo-icon gradient-text">✦</span>
           <div>
             <span className="navbar__logo-name">{siteInfo.name}</span>
             <span className="navbar__logo-tag">{siteInfo.tagline}</span>

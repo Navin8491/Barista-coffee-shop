@@ -87,6 +87,13 @@ export default function HeroSlider() {
       {/* Dark overlay */}
       <div className="hero__overlay" />
 
+      {/* Floating Smoke Effect */}
+      <div className="hero__smoke-container">
+        <div className="smoke smoke-1"></div>
+        <div className="smoke smoke-2"></div>
+        <div className="smoke smoke-3"></div>
+      </div>
+
       {/* Content */}
       <div ref={textRef} className="hero__content">
         <p className="hero__eyebrow">☕ {siteInfo.name}</p>

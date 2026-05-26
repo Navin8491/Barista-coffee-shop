@@ -61,10 +61,10 @@ export default function ProductCard({ product, onAddToCart }) {
         </div>
 
         <button
-          className="btn btn-primary product-card__btn"
+          className="btn btn-outline product-card__btn"
           onClick={() => onAddToCart(product)}
         >
-          🛍️ Add to Cart
+          Add to Cart
         </button>
       </div>
     </div>

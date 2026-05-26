@@ -34,7 +34,7 @@ export default function Footer() {
           {/* About */}
           <div className="footer__col">
             <div className="footer__brand">
-              <span className="footer__brand-icon">☕</span>
+              <span className="footer__brand-icon gradient-text">✦</span>
               <span className="footer__brand-name">{siteInfo.name}</span>
             </div>
             <p className="footer__about">{footerData.about}</p>
