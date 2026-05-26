@@ -29,11 +29,9 @@ export default function Navbar({ cartCount, onCartOpen }) {
 
   /* Close menu on route change */
   useEffect(() => {
-    if (menuOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setMenuOpen(false);
-    }
-  }, [location, menuOpen]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMenuOpen(false);
+  }, [location]);
 
   return (
     <header
