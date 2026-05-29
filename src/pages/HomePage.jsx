@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import HeroSlider from '../components/HeroSlider';
 import ProductGrid from '../components/ProductGrid';
-import { products, testimonials } from '../data/siteData';
+import { testimonials } from '../data/siteData';
+import { supabase } from '../lib/supabaseClient';
 import './HomePage.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -181,24 +182,53 @@ function CtaBanner() {
 }
 
 export default function HomePage({ onAddToCart }) {
+  const [dbProducts, setDbProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        console.log("Fetching products from Supabase for Home Page...");
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('name');
+        
+        console.log("Home Page Products data fetched:", data);
+        console.log("Home Page Products error (if any):", error);
+        
+        if (error) throw error;
+        setDbProducts(data || []);
+      } catch (err) {
+        console.error('Error fetching products on Home Page:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
   return (
     <main>
       <HeroSlider />
       <ProductGrid
-        products={products.slice(0, 4)}
+        products={dbProducts.slice(0, 4)}
         onAddToCart={onAddToCart}
         label="Featured Products"
         title="Our Bestsellers"
         subtitle="Handpicked favorites loved by our community — from rich espressos to indulgent pastries."
+        loading={loading}
       />
       <AboutBanner />
       <CoffeeProcess />
       <ProductGrid
-        products={products.slice(4)}
+        products={dbProducts.slice(4)}
         onAddToCart={onAddToCart}
         label="More to Discover"
         title="Specialty Selection"
         subtitle="Seasonal offerings and chef's specials, freshly prepared each day."
+        loading={loading}
       />
       <TestimonialsSection />
       <CtaBanner />

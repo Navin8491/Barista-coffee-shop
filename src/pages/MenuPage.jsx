@@ -22,10 +22,14 @@ export default function MenuPage({ onAddToCart }) {
     const fetchProducts = async () => {
       setLoading(true);
       try {
+        console.log("Fetching products from Supabase...");
         const { data, error } = await supabase
           .from('products')
           .select('*')
           .order('name');
+        
+        console.log("Products data fetched:", data);
+        console.log("Products error (if any):", error);
         
         if (error) throw error;
         setDbProducts(data || []);
@@ -127,6 +131,12 @@ export default function MenuPage({ onAddToCart }) {
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="skeleton-card skeleton" />
               ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="no-products-found" style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '3rem 1rem' }}>
+              <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>☕</span>
+              <h3>No Products Found</h3>
+              <p style={{ color: 'var(--coffee)', marginTop: '0.5rem' }}>We couldn't find any coffee products matching your criteria.</p>
             </div>
           ) : (
             <div className="grid-4" ref={gridRef}>

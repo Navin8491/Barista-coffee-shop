@@ -21,6 +21,7 @@ export default function ReviewsModal({ isOpen, onClose, productId, productName, 
     if (!productId) return;
     setLoading(true);
     try {
+      console.log("Fetching reviews from Supabase for product:", productId);
       const { data, error } = await supabase
         .from('reviews')
         .select(`
@@ -36,6 +37,9 @@ export default function ReviewsModal({ isOpen, onClose, productId, productName, 
         `)
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
+
+      console.log("Reviews data fetched:", data);
+      console.log("Reviews error (if any):", error);
 
       if (error) throw error;
       setReviews(data || []);

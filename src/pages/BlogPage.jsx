@@ -60,10 +60,14 @@ export default function BlogPage() {
     const fetchBlogs = async () => {
       setLoading(true);
       try {
+        console.log("Fetching blogs from Supabase...");
         const { data, error } = await supabase
           .from('blogs')
           .select('*')
           .order('created_at', { ascending: false });
+
+        console.log("Blogs data fetched:", data);
+        console.log("Blogs error (if any):", error);
 
         if (error) throw error;
         setBlogsList(data || []);
@@ -295,7 +299,13 @@ export default function BlogPage() {
       {/* ── Section 3: Articles Grid Feed (#F8F1EA) ── */}
       <section className="blog-feed-section section-pad">
         <div className="container">
-          {filteredPosts.length === 0 ? (
+          {loading ? (
+            <div className="grid-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="skeleton-card skeleton" style={{ height: '350px' }} />
+              ))}
+            </div>
+          ) : filteredPosts.length === 0 ? (
             <div className="blog-no-results">
               <span>☕</span>
               <h3>No articles found</h3>

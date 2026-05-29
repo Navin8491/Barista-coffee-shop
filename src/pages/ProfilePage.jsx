@@ -44,6 +44,7 @@ export default function ProfilePage() {
     const fetchOrders = async () => {
       setOrdersLoading(true);
       try {
+        console.log("Fetching orders from Supabase for user:", user.id);
         const { data, error } = await supabase
           .from('orders')
           .select(`
@@ -64,6 +65,9 @@ export default function ProfilePage() {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
+        console.log("Orders data fetched:", data);
+        console.log("Orders error (if any):", error);
+
         if (error) throw error;
         setOrders(data || []);
       } catch (err) {
@@ -76,6 +80,7 @@ export default function ProfilePage() {
     const fetchFavorites = async () => {
       setFavoritesLoading(true);
       try {
+        console.log("Fetching favorites from Supabase for user:", user.id);
         const { data, error } = await supabase
           .from('favorites')
           .select(`
@@ -90,6 +95,9 @@ export default function ProfilePage() {
             )
           `)
           .eq('user_id', user.id);
+
+        console.log("Favorites data fetched:", data);
+        console.log("Favorites error (if any):", error);
 
         if (error) throw error;
         setFavorites(data || []);

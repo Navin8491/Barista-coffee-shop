@@ -49,16 +49,21 @@ export default function BlogDetailPage() {
   const [copied, setCopied] = useState(false);
 
   // Fetch current post and all posts on mount / id change
+  // Fetch current post and all posts on mount / id change
   useEffect(() => {
     const fetchPostDetails = async () => {
       setLoading(true);
       try {
+        console.log("Fetching blog post details from Supabase for ID:", id);
         // Fetch current post
         const { data: currentData, error: currentError } = await supabase
           .from('blogs')
           .select('*')
           .eq('id', id)
           .single();
+
+        console.log("Blog post data fetched:", currentData);
+        console.log("Blog post error (if any):", currentError);
 
         if (currentError) throw currentError;
 
@@ -79,9 +84,13 @@ export default function BlogDetailPage() {
         }
 
         // Fetch all posts for related section
+        console.log("Fetching all blogs from Supabase for related section...");
         const { data: listData, error: listError } = await supabase
           .from('blogs')
           .select('*');
+
+        console.log("All blogs data fetched:", listData);
+        console.log("All blogs error (if any):", listError);
 
         if (listError) throw listError;
 
@@ -143,6 +152,29 @@ export default function BlogDetailPage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (loading) {
+    return (
+      <div className="bd-notfound" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div className="loading-spinner" style={{
+          width: '50px',
+          height: '50px',
+          border: '5px solid var(--gray-300, #e8e2de)',
+          borderTopColor: 'var(--primary, #b56a2d)',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          marginBottom: '1.5rem'
+        }} />
+        <h3>Loading article details...</h3>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   if (!post) {
     return (
