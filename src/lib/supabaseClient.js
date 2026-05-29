@@ -4,15 +4,12 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 console.log("URL:", supabaseUrl);
-console.log("KEY:", supabaseAnonKey ? (supabaseAnonKey.substring(0, 10) + "...") : undefined);
+console.log("KEY:", supabaseAnonKey);
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase URL or Anon Key is missing. Please check your .env file.');
+  throw new Error('Supabase URL or Anon Key is missing. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment variables (.env or Vercel dashboard).');
 }
 
-// Default to placeholder if undefined to prevent total JS load failure
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder-project.supabase.co',
-  supabaseAnonKey || 'placeholder-anon-key'
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 
