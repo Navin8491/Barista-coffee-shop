@@ -184,10 +184,12 @@ function CtaBanner() {
 export default function HomePage({ onAddToCart }) {
   const [dbProducts, setDbProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
+      setFetchError(null);
       try {
         console.log("Before Products Fetch");
         const { data, error } = await supabase
@@ -205,6 +207,7 @@ export default function HomePage({ onAddToCart }) {
         setDbProducts(data || []);
       } catch (error) {
         console.error("Products Fetch Error:", error);
+        setFetchError("Unable to load products.");
       } finally {
         setLoading(false);
       }
@@ -222,6 +225,7 @@ export default function HomePage({ onAddToCart }) {
         title="Our Bestsellers"
         subtitle="Handpicked favorites loved by our community — from rich espressos to indulgent pastries."
         loading={loading}
+        error={fetchError}
       />
       <AboutBanner />
       <CoffeeProcess />
@@ -232,6 +236,7 @@ export default function HomePage({ onAddToCart }) {
         title="Specialty Selection"
         subtitle="Seasonal offerings and chef's specials, freshly prepared each day."
         loading={loading}
+        error={fetchError}
       />
       <TestimonialsSection />
       <CtaBanner />

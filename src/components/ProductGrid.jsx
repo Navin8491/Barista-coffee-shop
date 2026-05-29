@@ -6,7 +6,7 @@ import './ProductGrid.css';
 
 gsap.registerPlugin(ScrollTrigger);
 
-export default function ProductGrid({ products = [], onAddToCart, title, subtitle, label, loading }) {
+export default function ProductGrid({ products = [], onAddToCart, title, subtitle, label, loading, error }) {
   const sectionRef  = useRef(null);
   const headerRef   = useRef(null);
   const cardsRef    = useRef([]);
@@ -49,7 +49,7 @@ export default function ProductGrid({ products = [], onAddToCart, title, subtitl
     }
 
     return () => ScrollTrigger.getAll().forEach((t) => t.kill());
-  }, [products, loading]);
+  }, [products, loading, error]);
 
   return (
     <section ref={sectionRef} className="product-grid__section section-pad">
@@ -65,10 +65,16 @@ export default function ProductGrid({ products = [], onAddToCart, title, subtitl
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="skeleton-card skeleton" style={{ height: '380px' }} />
             ))
+          ) : error ? (
+            <div className="no-products-found" style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '3rem 1rem' }}>
+              <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>❌</span>
+              <h3>Unable to load products.</h3>
+              <p style={{ color: 'var(--coffee)', marginTop: '0.5rem' }}>An error occurred while fetching the menu items. Please try again later.</p>
+            </div>
           ) : products.length === 0 ? (
             <div className="no-products-found" style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '3rem 1rem' }}>
               <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>☕</span>
-              <h3>No Products Found</h3>
+              <h3>No products found</h3>
               <p style={{ color: 'var(--coffee)', marginTop: '0.5rem' }}>We couldn't load any products right now.</p>
             </div>
           ) : (

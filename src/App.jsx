@@ -199,9 +199,8 @@ function AppContent() {
 
   const cartCount = cartItems.reduce((sum, i) => sum + i.qty, 0);
 
-  if (loading) {
-    return <LoadingScreen />;
-  }
+  // Do not block public pages from rendering and querying products while auth is initializing.
+  // ProtectedRoute will handle showing the LoadingScreen for auth-restricted pages (profile/checkout).
 
   return (
     <BrowserRouter>

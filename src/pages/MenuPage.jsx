@@ -13,6 +13,7 @@ export default function MenuPage({ onAddToCart }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [dbProducts, setDbProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   
   const gridRef = useRef(null);
   const headerRef = useRef(null);
@@ -21,6 +22,7 @@ export default function MenuPage({ onAddToCart }) {
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
+      setFetchError(null);
       try {
         console.log("Before Products Fetch");
         const { data, error } = await supabase
@@ -38,6 +40,7 @@ export default function MenuPage({ onAddToCart }) {
         setDbProducts(data || []);
       } catch (error) {
         console.error("Products Fetch Error:", error);
+        setFetchError("Unable to load products.");
       } finally {
         setLoading(false);
       }
@@ -135,10 +138,16 @@ export default function MenuPage({ onAddToCart }) {
                 <div key={i} className="skeleton-card skeleton" />
               ))}
             </div>
+          ) : fetchError ? (
+            <div className="no-products-found" style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '3rem 1rem' }}>
+              <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>❌</span>
+              <h3>Unable to load products.</h3>
+              <p style={{ color: 'var(--coffee)', marginTop: '0.5rem' }}>An error occurred while fetching the menu items. Please try again later.</p>
+            </div>
           ) : filtered.length === 0 ? (
             <div className="no-products-found" style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '3rem 1rem' }}>
               <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>☕</span>
-              <h3>No Products Found</h3>
+              <h3>No products found</h3>
               <p style={{ color: 'var(--coffee)', marginTop: '0.5rem' }}>We couldn't find any coffee products matching your criteria.</p>
             </div>
           ) : (

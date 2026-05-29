@@ -60,19 +60,22 @@ export default function BlogPage() {
     const fetchBlogs = async () => {
       setLoading(true);
       try {
-        console.log("Fetching blogs from Supabase...");
+        console.log("Before Blogs Fetch");
         const { data, error } = await supabase
           .from('blogs')
           .select('*')
           .order('created_at', { ascending: false });
 
-        console.log("DATA:", data);
-        console.log("ERROR:", error);
+        console.log("After Blogs Fetch");
+        console.log("Blogs Data:", data);
+        console.log("Blogs Error:", error);
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
         setBlogsList(data || []);
-      } catch (err) {
-        console.error('Error fetching blogs:', err);
+      } catch (error) {
+        console.error("Blogs Fetch Error:", error);
       } finally {
         setLoading(false);
       }

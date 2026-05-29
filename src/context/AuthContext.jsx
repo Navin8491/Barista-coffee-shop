@@ -36,8 +36,9 @@ export function AuthProvider({ children }) {
 
     const initializeAuth = async () => {
       try {
-        console.log("Auth Initialization Started");
+        console.log("Auth initialization start");
         const { data: { session } } = await supabase.auth.getSession();
+        console.log("Session loaded");
         if (session?.user) {
           console.log("Session User Found:", session.user.email);
           if (active) {
@@ -57,7 +58,7 @@ export function AuthProvider({ children }) {
       } finally {
         if (active) {
           setLoading(false);
-          console.log("Auth Initialization Complete");
+          console.log("Auth loading complete");
         }
       }
     };
@@ -85,6 +86,7 @@ export function AuthProvider({ children }) {
       } finally {
         if (active) {
           setLoading(false);
+          console.log("Auth loading complete");
         }
       }
     });

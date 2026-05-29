@@ -54,7 +54,7 @@ export default function BlogDetailPage() {
     const fetchPostDetails = async () => {
       setLoading(true);
       try {
-        console.log("Fetching blog post details from Supabase for ID:", id);
+        console.log("Before Blog Detail Fetch");
         // Fetch current post
         const { data: currentData, error: currentError } = await supabase
           .from('blogs')
@@ -62,10 +62,13 @@ export default function BlogDetailPage() {
           .eq('id', id)
           .single();
 
-        console.log("DATA:", currentData);
-        console.log("ERROR:", currentError);
+        console.log("After Blog Detail Fetch");
+        console.log("Blog Detail Data:", currentData);
+        console.log("Blog Detail Error:", currentError);
 
-        if (currentError) throw currentError;
+        if (currentError) {
+          throw currentError;
+        }
 
         if (currentData) {
           const authInfo = getAuthorInfo(currentData.id);
@@ -84,15 +87,18 @@ export default function BlogDetailPage() {
         }
 
         // Fetch all posts for related section
-        console.log("Fetching all blogs from Supabase for related section...");
+        console.log("Before Related Blogs Fetch");
         const { data: listData, error: listError } = await supabase
           .from('blogs')
           .select('*');
 
-        console.log("DATA:", listData);
-        console.log("ERROR:", listError);
+        console.log("After Related Blogs Fetch");
+        console.log("Related Blogs Data:", listData);
+        console.log("Related Blogs Error:", listError);
 
-        if (listError) throw listError;
+        if (listError) {
+          throw listError;
+        }
 
         if (listData) {
           const mapped = listData.map((b) => {
