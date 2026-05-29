@@ -195,8 +195,8 @@ export default function HomePage({ onAddToCart }) {
           .select('*')
           .order('name');
         
-        console.log("Home Page Products data fetched:", data);
-        console.log("Home Page Products error (if any):", error);
+        console.log("Products:", data);
+        console.log("Products Error:", error);
         
         if (error) throw error;
         setDbProducts(data || []);

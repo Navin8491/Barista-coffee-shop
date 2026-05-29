@@ -33,11 +33,13 @@ export default function ProductCard({ product, onAddToCart }) {
 
   const fetchProductStats = async () => {
     try {
-      // 1. Fetch reviews
       const { data: revData, error: revError } = await supabase
         .from('reviews')
         .select('rating')
         .eq('product_id', product.id);
+
+      console.log(`Reviews for product ${product.id}:`, revData);
+      console.log(`Reviews Error for product ${product.id}:`, revError);
 
       if (revError) throw revError;
 

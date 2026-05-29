@@ -28,8 +28,8 @@ export default function MenuPage({ onAddToCart }) {
           .select('*')
           .order('name');
         
-        console.log("Products data fetched:", data);
-        console.log("Products error (if any):", error);
+        console.log("Products:", data);
+        console.log("Products Error:", error);
         
         if (error) throw error;
         setDbProducts(data || []);
