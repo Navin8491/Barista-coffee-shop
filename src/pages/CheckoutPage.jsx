@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import './CheckoutPage.css';
 
 export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClearCart }) {
-  const navigate = useNavigate();
   const pageRef = useRef(null);
   const cardRef = useRef(null);
   const formRef = useRef(null);
@@ -19,49 +18,47 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
     zip: ''
   });
 
+  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderSummary, setOrderSummary] = useState({ items: [], total: 0 });
+
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
   const shipping = cartItems.length > 0 ? 5.00 : 0;
   const total = subtotal + shipping;
 
   useEffect(() => {
-    // Check if cart is empty and animate appropriately
-    if (cartItems.length === 0) {
-      gsap.fromTo(pageRef.current, { opacity: 0 }, { opacity: 1, duration: 0.8, ease: 'power2.out' });
+    if (orderPlaced || cartItems.length === 0) {
+      gsap.fromTo(pageRef.current, { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' });
       return;
     }
 
     const tl = gsap.timeline();
 
-    // Fade in page
     tl.fromTo(pageRef.current, 
       { opacity: 0 }, 
       { opacity: 1, duration: 0.4, ease: 'power2.out' }
     );
 
-    // Slide up order card
     tl.fromTo(cardRef.current,
-      { y: 50, opacity: 0 },
+      { y: 40, opacity: 0 },
       { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out' },
       "-=0.2"
     );
 
-    // Stagger form fields
     const formGroups = formRef.current?.querySelectorAll('.form-group');
     if (formGroups) {
       tl.fromTo(formGroups,
         { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.4, stagger: 0.1, ease: 'power2.out' },
+        { y: 0, opacity: 1, duration: 0.4, stagger: 0.08, ease: 'power2.out' },
         "-=0.4"
       );
     }
 
-    // Fade in price section and scale slightly
     tl.fromTo(priceRef.current,
       { opacity: 0, scale: 0.95 },
-      { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.5)' },
+      { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.2)' },
       "-=0.2"
     );
-  }, [cartItems.length]);
+  }, [cartItems.length, orderPlaced]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -69,23 +66,16 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
-    
-    // Simulate order placement
-    gsap.to(pageRef.current, {
-      opacity: 0,
-      y: -20,
-      duration: 0.4,
-      ease: 'power2.in',
-      onComplete: () => {
-        onClearCart();
-        navigate('/');
-        // The toast will be shown by App if we had passed it, but we can rely on navigating back
-      }
+    setOrderSummary({
+      items: [...cartItems],
+      total: total
     });
+    setOrderPlaced(true);
+    onClearCart();
   };
 
   const buttonHover = (e) => {
-    gsap.to(e.currentTarget, { scale: 1.03, boxShadow: '0 8px 24px rgba(193,117,61,0.35)', duration: 0.3 });
+    gsap.to(e.currentTarget, { scale: 1.02, boxShadow: '0 8px 24px rgba(181, 106, 45, 0.2)', duration: 0.3 });
   };
 
   const buttonLeave = (e) => {
@@ -93,8 +83,59 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
   };
 
   const buttonClick = (e) => {
-    gsap.to(e.currentTarget, { scale: 0.95, duration: 0.1, yoyo: true, repeat: 1 });
+    gsap.to(e.currentTarget, { scale: 0.97, duration: 0.1, yoyo: true, repeat: 1 });
   };
+
+  if (orderPlaced) {
+    return (
+      <main className="checkout-page" ref={pageRef}>
+        <div className="container">
+          <div className="checkout-success-card card">
+            <span className="checkout-success-icon">🎉</span>
+            <h2>Order Placed Successfully!</h2>
+            <p className="checkout-success-msg">Thank you, <strong>{formData.fullName || 'Valued Customer'}</strong>. Your delicious coffee is being crafted right now.</p>
+            
+            <div className="checkout-success-details">
+              <h3>Receipt Summary</h3>
+              <div className="checkout-success-items">
+                {orderSummary.items.map((item) => (
+                  <div key={item.id} className="checkout-success-item">
+                    <span>{item.qty}x {item.name}</span>
+                    <span>${(item.price * item.qty).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="checkout-success-total">
+                <span>Total Paid</span>
+                <strong>${orderSummary.total.toFixed(2)}</strong>
+              </div>
+            </div>
+
+            <div className="checkout-success-meta">
+              <div className="meta-box">
+                <span className="meta-label">Est. Readiness</span>
+                <strong className="meta-value">15–20 Mins</strong>
+              </div>
+              <div className="meta-box">
+                <span className="meta-label">Pick Up Location</span>
+                <strong className="meta-value">123 Coffee St, Milan</strong>
+              </div>
+            </div>
+
+            <Link 
+              to="/menu" 
+              className="btn btn-primary"
+              onMouseEnter={buttonHover}
+              onMouseLeave={buttonLeave}
+              onMouseDown={buttonClick}
+            >
+              Order More Delicacies
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -112,7 +153,7 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
   }
 
   return (
-    <main className="checkout-page" ref={pageRef} style={{ opacity: 0 }}>
+    <main className="checkout-page" ref={pageRef}>
       <div className="container">
         
         {/* Header */}
@@ -159,13 +200,19 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
               <div className="checkout-form-row">
                 <div className="form-group">
                   <label htmlFor="city">City</label>
-                  <input type="text" id="city" name="city" value={formData.city} onChange={handleChange} required placeholder="New York" />
+                  <input type="text" id="city" name="city" value={formData.city} onChange={handleChange} required placeholder="Milan" />
                 </div>
                 <div className="form-group">
                   <label htmlFor="zip">ZIP / Postal Code</label>
-                  <input type="text" id="zip" name="zip" value={formData.zip} onChange={handleChange} required placeholder="10001" />
+                  <input type="text" id="zip" name="zip" value={formData.zip} onChange={handleChange} required placeholder="20121" />
                 </div>
               </div>
+
+              <button 
+                type="submit"
+                style={{ display: 'none' }}
+                id="hidden-submit-btn"
+              />
             </form>
           </div>
 
@@ -209,7 +256,7 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
             <div className="checkout-actions">
               <button 
                 className="btn btn-primary btn-place-order" 
-                onClick={handlePlaceOrder}
+                onClick={() => document.getElementById('hidden-submit-btn').click()}
                 onMouseEnter={buttonHover}
                 onMouseLeave={buttonLeave}
                 onMouseDown={buttonClick}

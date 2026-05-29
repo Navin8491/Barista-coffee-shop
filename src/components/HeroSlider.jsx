@@ -17,32 +17,90 @@ export default function HeroSlider() {
   /* ── GSAP text reveal per slide ── */
   const animateText = useCallback(() => {
     const tl = gsap.timeline({ onComplete: () => setIsAnimating(false) });
+    
     tl.fromTo(
       titleRef.current,
-      { y: 60, opacity: 0 },
-      { y: 0,  opacity: 1, duration: 0.75, ease: 'power3.out' }
+      { y: 70, opacity: 0, scale: 0.95 },
+      { y: 0,  opacity: 1, scale: 1, duration: 0.85, ease: 'power4.out' }
     )
     .fromTo(
       subRef.current,
       { y: 40, opacity: 0 },
-      { y: 0,  opacity: 1, duration: 0.65, ease: 'power3.out' },
-      '-=0.45'
+      { y: 0,  opacity: 1, duration: 0.75, ease: 'power3.out' },
+      '-=0.55'
     )
     .fromTo(
       btnRef.current,
       { y: 30, opacity: 0 },
-      { y: 0,  opacity: 1, duration: 0.55, ease: 'power3.out' },
-      '-=0.4'
+      { y: 0,  opacity: 1, duration: 0.65, ease: 'power3.out' },
+      '-=0.5'
     );
   }, []);
 
-  /* ── Social links entrance ── */
+  /* ── Mount animation & Parallax ── */
   useEffect(() => {
+    // Social links stagger
     gsap.fromTo(
       '.hero-social__link',
       { x: 30, opacity: 0 },
-      { x: 0, opacity: 1, duration: 0.5, stagger: 0.1, delay: 1.2, ease: 'power2.out' }
+      { x: 0, opacity: 1, duration: 0.5, stagger: 0.1, delay: 1, ease: 'power2.out' }
     );
+
+    // Auto-float animation for background details
+    gsap.to('.float-1', {
+      y: '+=15',
+      x: '-=10',
+      rotation: 15,
+      duration: 5,
+      repeat: -1,
+      yoyo: true,
+      ease: 'sine.inOut'
+    });
+    gsap.to('.float-2', {
+      y: '-=20',
+      x: '+=15',
+      rotation: -25,
+      duration: 6,
+      repeat: -1,
+      yoyo: true,
+      ease: 'sine.inOut'
+    });
+    gsap.to('.float-3', {
+      y: '+=25',
+      x: '+=10',
+      rotation: 30,
+      duration: 7,
+      repeat: -1,
+      yoyo: true,
+      ease: 'sine.inOut'
+    });
+    gsap.to('.float-4', {
+      y: '-=15',
+      x: '-=20',
+      rotation: -15,
+      duration: 5.5,
+      repeat: -1,
+      yoyo: true,
+      ease: 'sine.inOut'
+    });
+  }, []);
+
+  /* Parallax hover movement */
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!containerRef.current) return;
+      const { clientX, clientY } = e;
+      const xPos = (clientX / window.innerWidth - 0.5) * 40;
+      const yPos = (clientY / window.innerHeight - 0.5) * 40;
+      
+      gsap.to('.float-1', { x: xPos * 0.5, y: yPos * 0.5, duration: 1.2, ease: 'power2.out', overwrite: 'auto' });
+      gsap.to('.float-2', { x: xPos * -0.6, y: yPos * -0.6, duration: 1.5, ease: 'power2.out', overwrite: 'auto' });
+      gsap.to('.float-3', { x: xPos * 0.8, y: yPos * -0.8, duration: 1.8, ease: 'power2.out', overwrite: 'auto' });
+      gsap.to('.float-4', { x: xPos * -0.4, y: yPos * 0.4, duration: 1.4, ease: 'power2.out', overwrite: 'auto' });
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   /* Run text animation on slide change */
@@ -54,7 +112,7 @@ export default function HeroSlider() {
   useEffect(() => {
     timerRef.current = setInterval(() => {
       setCurrent((prev) => (prev + 1) % slides.length);
-    }, 5000);
+    }, 6000);
     return () => clearInterval(timerRef.current);
   }, []);
 
@@ -65,7 +123,7 @@ export default function HeroSlider() {
     setCurrent(idx);
     timerRef.current = setInterval(() => {
       setCurrent((prev) => (prev + 1) % slides.length);
-    }, 5000);
+    }, 6000);
   };
 
   const prev = () => goTo((current - 1 + slides.length) % slides.length);
@@ -92,6 +150,24 @@ export default function HeroSlider() {
         <div className="smoke smoke-1"></div>
         <div className="smoke smoke-2"></div>
         <div className="smoke smoke-3"></div>
+      </div>
+
+      {/* Floating Decorative Icons for Parallax & Coffee Theme */}
+      <div className="hero__decor float-1" style={{ top: '20%', left: '10%' }}>
+        <svg width="50" height="50" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M32 4C32 4 38 18 44 24C50 30 64 32 64 32C64 32 50 34 44 40C38 46 32 60 32 60C32 60 26 46 20 40C14 34 0 32 0 32C0 32 14 30 20 24C26 18 32 4 32 4Z" fill="var(--gold)" opacity="0.3"/>
+        </svg>
+      </div>
+      <div className="hero__decor float-2" style={{ bottom: '25%', right: '15%' }}>
+        <svg width="35" height="35" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M32 4C32 4 38 18 44 24C50 30 64 32 64 32C64 32 50 34 44 40C38 46 32 60 32 60C32 60 26 46 20 40C14 34 0 32 0 32C0 32 14 30 20 24C26 18 32 4 32 4Z" fill="var(--gold)" opacity="0.2"/>
+        </svg>
+      </div>
+      <div className="hero__decor float-3" style={{ top: '25%', right: '12%', fontSize: '2.5rem', userSelect: 'none', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.3))' }}>
+        ☕
+      </div>
+      <div className="hero__decor float-4" style={{ bottom: '20%', left: '15%', fontSize: '2.2rem', userSelect: 'none', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.3))' }}>
+        🌿
       </div>
 
       {/* Content */}

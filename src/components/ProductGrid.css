@@ -1,2 +1,7 @@
-.product-grid { margin-top: 2.5rem; }
-.product-grid__section { background: var(--secondary); }
+.product-grid {
+  margin-top: 3rem;
+  gap: 2rem;
+}
+.product-grid__section {
+  background: var(--secondary);
+}

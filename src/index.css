@@ -8,34 +8,34 @@
 
 /* ── CSS Custom Properties ── */
 :root {
-  --cream: #F8F5F2;
-  --latte: #D9C2A7;
-  --coffee: #6F4E37;
-  --espresso: #3B2A22;
-  --gold: #C8A97E;
+  --cream: #f8f3ef; /* Background: #f8f3ef */
+  --secondary: #fffaf7; /* Secondary: #fffaf7 */
+  --gold: #b56a2d; /* Accent: #b56a2d */
+  --espresso: #1f1f1f; /* Text: #1f1f1f */
+  --coffee: #534b46; /* Muted text */
+  --latte: #d9c2a7;
   
   --primary: var(--gold);
-  --primary-dark: #b5956a;
-  --primary-light: #e3cca6;
-  --secondary: var(--cream);
+  --primary-dark: #96531d;
+  --primary-light: #e6a775;
   --dark: var(--espresso);
-  --dark-80: rgba(59, 42, 34, 0.8);
+  --dark-80: rgba(31, 31, 31, 0.8);
   --white: #ffffff;
   
-  --gray-100: #fbfaf9;
-  --gray-300: #e0dcd9;
-  --gray-500: #8c827a;
+  --gray-100: #fffaf7;
+  --gray-300: #e8e2de;
+  --gray-500: #7c726b;
   
   --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 32px;
+  --radius-md: 18px; /* Redesigned larger border radius */
+  --radius-lg: 36px;
   --radius-pill: 999px;
   
-  --shadow-sm: 0 4px 12px rgba(59, 42, 34, 0.05);
-  --shadow-md: 0 10px 30px rgba(59, 42, 34, 0.08);
-  --shadow-lg: 0 20px 50px rgba(59, 42, 34, 0.15);
+  --shadow-sm: 0 4px 15px rgba(31, 31, 31, 0.03);
+  --shadow-md: 0 10px 35px rgba(31, 31, 31, 0.06);
+  --shadow-lg: 0 24px 60px rgba(31, 31, 31, 0.12);
   
-  --transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   --font-body: 'Poppins', sans-serif;
   --font-heading: 'Playfair Display', serif;
 }
@@ -56,8 +56,8 @@ html {
 
 body {
   font-family: var(--font-body);
-  background: var(--secondary);
-  color: var(--coffee);
+  background: var(--cream);
+  color: var(--espresso);
   overflow-x: hidden;
   line-height: 1.7;
 }
@@ -151,9 +151,9 @@ p {
 /* ── Layout Utilities ── */
 .container {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 clamp(1rem, 3.5vw, 2.5rem);
 }
 
 .section-pad {
@@ -253,13 +253,14 @@ p {
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
-  transition: transform var(--transition), box-shadow var(--transition);
-  border: 1px solid rgba(217, 194, 167, 0.1);
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  border: 1px solid rgba(181, 106, 45, 0.06);
 }
 
 .card:hover {
-  transform: translateY(-8px) scale(1.02);
+  transform: translateY(-10px);
   box-shadow: var(--shadow-lg);
+  border-color: rgba(181, 106, 45, 0.15);
 }
 
 /* ── Star Rating ── */

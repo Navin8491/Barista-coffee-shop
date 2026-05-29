@@ -2,7 +2,7 @@
 .hero {
   position: relative;
   height: 100vh;
-  min-height: 700px;
+  min-height: 600px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -17,14 +17,14 @@
   background-position: center;
   opacity: 0;
   transition: opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1);
-  transform: scale(1.08);
+  transform: scale(1.06);
 }
 .hero__bg--active {
   opacity: 1;
   animation: heroZoom 8s ease-out forwards;
 }
 @keyframes heroZoom {
-  from { transform: scale(1.08); }
+  from { transform: scale(1.06); }
   to   { transform: scale(1.00); }
 }
 
@@ -34,9 +34,9 @@
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(59, 42, 34, 0.5) 0%,
-    rgba(59, 42, 34, 0.7) 50%,
-    rgba(59, 42, 34, 0.85) 100%
+    rgba(31, 31, 31, 0.45) 0%,
+    rgba(31, 31, 31, 0.55) 50%,
+    rgba(31, 31, 31, 0.7) 100-percent
   );
   z-index: 1;
 }
@@ -56,7 +56,7 @@
 .smoke {
   position: absolute;
   bottom: -100px;
-  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 60%);
+  background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 60%);
   border-radius: 50%;
   filter: blur(25px);
   opacity: 0;
@@ -69,54 +69,69 @@
 
 @keyframes smokeRise {
   0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 0; }
-  25% { opacity: 0.4; }
-  75% { opacity: 0.15; }
+  25% { opacity: 0.3; }
+  75% { opacity: 0.1; }
   100% { transform: translateY(-600px) scale(3) rotate(45deg); opacity: 0; }
+}
+
+/* Floating decor items */
+.hero__decor {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  transition: transform 0.1s ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Content */
 .hero__content {
   position: relative;
-  z-index: 3;
-  max-width: 800px;
-  padding: 0 2rem;
+  z-index: 4;
+  max-width: 850px;
+  padding: 0 clamp(1rem, 5vw, 3rem);
   text-align: center;
 }
 .hero__eyebrow {
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   letter-spacing: 0.25em;
   text-transform: uppercase;
   color: var(--gold);
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 1.25rem;
   display: inline-block;
 }
 .hero__title {
   font-family: var(--font-heading);
-  font-size: clamp(3.5rem, 8vw, 6.5rem);
+  font-size: clamp(2.2rem, 7vw, 5.5rem);
   color: var(--cream);
   line-height: 1.1;
   margin-bottom: 1.5rem;
-  text-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  text-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  font-weight: 600;
 }
 .hero__subtitle {
-  font-size: clamp(1.1rem, 2vw, 1.3rem);
+  font-size: clamp(0.95rem, 1.8vw, 1.2rem);
   color: var(--latte);
   margin-bottom: 2.5rem;
   line-height: 1.8;
-  max-width: 600px;
+  max-width: 620px;
   margin-left: auto;
   margin-right: auto;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  text-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  font-weight: 400;
+  opacity: 0.95;
 }
 .hero__cta {
   display: flex;
   gap: 1.25rem;
   justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
 }
-.hero__cta .btn { min-width: 160px; justify-content: center; }
+.hero__cta .btn { min-width: 170px; justify-content: center; }
 
 /* Dots */
 .hero__dots {
@@ -129,8 +144,8 @@
   z-index: 4;
 }
 .hero__dot {
-  width: 32px;
-  height: 3px;
+  width: 24px;
+  height: 4px;
   border-radius: 2px;
   background: rgba(255,255,255,0.3);
   transition: background 0.4s, width 0.4s;
@@ -138,7 +153,7 @@
 }
 .hero__dot--active {
   background: var(--gold);
-  width: 48px;
+  width: 44px;
 }
 
 /* Arrows */
@@ -147,25 +162,26 @@
   top: 50%;
   transform: translateY(-50%);
   z-index: 4;
-  width: 60px;
-  height: 60px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(59,42,34,0.3);
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(31,31,31,0.25);
   color: var(--cream);
-  font-size: 2rem;
+  font-size: 1.8rem;
   display: flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
   transition: all var(--transition);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 .hero__arrow:hover {
   background: var(--gold);
   border-color: var(--gold);
-  transform: translateY(-50%) scale(1.1);
-  box-shadow: 0 0 20px rgba(200, 169, 126, 0.4);
+  transform: translateY(-50%) scale(1.08);
+  box-shadow: 0 0 20px rgba(181, 106, 45, 0.4);
 }
 .hero__arrow--prev { left: 2.5rem; }
 .hero__arrow--next { right: 2.5rem; }
@@ -185,7 +201,7 @@
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: rgba(59,42,34,0.5);
+  background: rgba(31,31,31,0.3);
   color: var(--cream);
   display: flex;
   align-items: center;
@@ -194,13 +210,14 @@
   font-weight: 500;
   transition: all var(--transition);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.1);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.08);
 }
 .hero-social__link:hover {
   background: var(--gold);
   border-color: var(--gold);
   color: #fff;
-  transform: scale(1.15) translateX(-5px);
+  transform: scale(1.1) translateX(-5px);
 }
 
 /* Slide counter */
@@ -213,7 +230,7 @@
   gap: 0.75rem;
   color: var(--latte);
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
   z-index: 4;
   letter-spacing: 0.1em;
   font-family: var(--font-body);
@@ -225,18 +242,24 @@
   background: rgba(217, 194, 167, 0.4);
 }
 
-/* Responsive */
+/* Responsive adjustments */
 @media (max-width: 1024px) {
   .hero__arrow--prev { left: 1rem; }
   .hero__arrow--next { right: 1rem; }
 }
 
 @media (max-width: 768px) {
+  .hero { min-height: 500px; }
+  .hero__decor { display: none; } /* Hide floating elements on mobile to prevent clutter */
   .hero__content { text-align: center; }
   .hero__cta { justify-content: center; }
   .hero-social { display: none; }
   .hero__counter { display: none; }
   .hero__arrow { width: 44px; height: 44px; font-size: 1.5rem; }
-  .hero__arrow--prev { left: 0.75rem; }
-  .hero__arrow--next { right: 0.75rem; }
+  .hero__arrow--prev { left: 0.5rem; }
+  .hero__arrow--next { right: 0.5rem; }
+}
+
+@media (max-width: 375px) {
+  .hero__cta .btn { width: 100%; min-width: unset; }
 }
