@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
 import './ProductCard.css';
 
 function Stars({ rating }) {
@@ -22,6 +24,70 @@ function getBadgeClass(tag) {
 }
 
 export default function ProductCard({ product, onAddToCart }) {
+  const { user } = useAuth();
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  // Check if item is in user favorites
+  useEffect(() => {
+    if (!user) {
+      setIsFavorite(false);
+      return;
+    }
+
+    const checkFavorite = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('favorites')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('product_id', product.id)
+          .maybeSingle();
+
+        if (error) throw error;
+        setIsFavorite(!!data);
+      } catch (err) {
+        console.warn('Error checking favorite:', err);
+      }
+    };
+
+    checkFavorite();
+  }, [user, product.id]);
+
+  // Toggle favorite status
+  const handleFavoriteClick = async (e) => {
+    e.stopPropagation();
+    
+    if (!user) {
+      alert('Please sign in to save products to your favorites.');
+      return;
+    }
+
+    try {
+      if (isFavorite) {
+        const { error } = await supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('product_id', product.id);
+
+        if (error) throw error;
+        setIsFavorite(false);
+      } else {
+        const { error } = await supabase
+          .from('favorites')
+          .insert({
+            user_id: user.id,
+            product_id: product.id,
+          });
+
+        if (error) throw error;
+        setIsFavorite(true);
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+    }
+  };
+
   return (
     <div className="product-card card">
       <div className="product-card__img-wrap">
@@ -36,6 +102,16 @@ export default function ProductCard({ product, onAddToCart }) {
             {product.tag}
           </span>
         )}
+
+        {/* Favorite Bookmark Heart Button */}
+        <button
+          className={`product-card__favorite${isFavorite ? ' is-favorite' : ''}`}
+          onClick={handleFavoriteClick}
+          aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        >
+          {isFavorite ? '❤️' : '🤍'}
+        </button>
+
         <button
           className="product-card__quick-add"
           onClick={() => onAddToCart(product)}
@@ -57,7 +133,7 @@ export default function ProductCard({ product, onAddToCart }) {
               <span className="product-card__original">${product.originalPrice.toFixed(2)}</span>
             )}
           </div>
-          <Stars rating={product.rating} />
+          <Stars rating={product.rating || 5} />
         </div>
 
         <button

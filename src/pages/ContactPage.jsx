@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { siteInfo } from '../data/siteData';
+import { supabase } from '../supabaseClient';
 import './ContactPage.css';
 
 export default function ContactPage() {
@@ -24,16 +25,34 @@ export default function ContactPage() {
     );
   }, []);
 
+  const [errorMsg, setErrorMsg] = useState('');
+
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setErrorMsg('');
+
+    try {
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert({
+          name: form.name,
+          email: form.email,
+          subject: form.subject,
+          message: form.message
+        });
+
+      if (error) throw error;
+
       setSubmitted(true);
       setForm({ name: '', email: '', subject: '', message: '' });
-    }, 1400);
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to submit your message. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,6 +73,11 @@ export default function ContactPage() {
             {/* Form */}
             <div ref={formRef} className="contact-form-wrap card">
               <h3 className="contact-form__title">Send a Message</h3>
+              {errorMsg && (
+                <div className="contact-error" style={{ background: '#fdf2f2', color: '#c81e1e', border: '1px solid #fde8e8', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', fontSize: '0.85rem', fontWeight: 500 }}>
+                  ⚠️ {errorMsg}
+                </div>
+              )}
               {submitted ? (
                 <div className="contact-success">
                   <span>✅</span>

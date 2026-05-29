@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
+import { supabase } from '../supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
 import './CheckoutPage.css';
 
 export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClearCart }) {
@@ -9,6 +11,7 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
   const formRef = useRef(null);
   const priceRef = useRef(null);
 
+  const { user, profile } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -20,10 +23,23 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
 
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderSummary, setOrderSummary] = useState({ items: [], total: 0 });
+  const [dbLoading, setDbLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
   const shipping = cartItems.length > 0 ? 5.00 : 0;
   const total = subtotal + shipping;
+
+  // Prepopulate form if profile is loaded
+  useEffect(() => {
+    if (profile) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: profile.full_name || '',
+        email: profile.email || user?.email || '',
+      }));
+    }
+  }, [profile, user]);
 
   useEffect(() => {
     if (orderPlaced || cartItems.length === 0) {
@@ -64,14 +80,40 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handlePlaceOrder = (e) => {
+  const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    setOrderSummary({
-      items: [...cartItems],
-      total: total
-    });
-    setOrderPlaced(true);
-    onClearCart();
+    setDbLoading(true);
+    setErrorMsg('');
+
+    try {
+      if (!user) {
+        throw new Error('Please sign in to place an order.');
+      }
+
+      // Record order in Supabase orders table
+      const { error } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          total_amount: total,
+          status: 'Completed' // Immediate completed pickup order state
+        });
+
+      if (error) throw error;
+
+      setOrderSummary({
+        items: [...cartItems],
+        total: total
+      });
+      setOrderPlaced(true);
+      
+      // Clear cart context state & clean up table cart_items
+      await onClearCart();
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to place order. Please try again.');
+    } finally {
+      setDbLoading(false);
+    }
   };
 
   const buttonHover = (e) => {
@@ -253,6 +295,12 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
               </div>
             </div>
 
+            {errorMsg && (
+              <div className="checkout-error" style={{ background: '#fdf2f2', color: '#c81e1e', border: '1px solid #fde8e8', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', margin: '1rem 0', fontSize: '0.85rem', fontWeight: 500 }}>
+                ⚠️ {errorMsg}
+              </div>
+            )}
+
             <div className="checkout-actions">
               <button 
                 className="btn btn-primary btn-place-order" 
@@ -260,8 +308,9 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
                 onMouseEnter={buttonHover}
                 onMouseLeave={buttonLeave}
                 onMouseDown={buttonClick}
+                disabled={dbLoading}
               >
-                Place Order
+                {dbLoading ? 'Processing...' : 'Place Order'}
               </button>
               <Link 
                 to="/menu" 
