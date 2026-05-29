@@ -33,6 +33,17 @@ export default function Navbar({ cartCount, onCartOpen }) {
     setMenuOpen(false);
   }, [location]);
 
+  /* Mobile menu stagger animation */
+  useEffect(() => {
+    if (menuOpen) {
+      gsap.fromTo(
+        '.navbar__nav--open .navbar__link',
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, stagger: 0.08, ease: 'power2.out', delay: 0.15 }
+      );
+    }
+  }, [menuOpen]);
+
   return (
     <header
       ref={navRef}

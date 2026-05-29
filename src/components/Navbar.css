@@ -286,9 +286,9 @@
     background: var(--cream);
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 1.75rem;
-    padding: 100px 2rem 2rem;
+    justify-content: flex-start;
+    gap: 1.25rem;
+    padding: clamp(120px, 18vh, 150px) 2rem 2rem;
     box-shadow: 0 15px 40px rgba(31, 31, 31, 0.08);
     overflow-y: auto;
     z-index: 1001;
