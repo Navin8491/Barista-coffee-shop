@@ -29,33 +29,66 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    // 1. Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-        fetchProfile(session.user.id).then((p) => {
-          setProfile(p);
-          setLoading(false);
-        });
-      } else {
+    let active = true;
+
+    // Safety timeout to prevent infinite loading screen
+    const safetyTimeout = setTimeout(() => {
+      if (active) {
+        console.warn('Auth initialization timed out. Forcing loading to complete.');
         setLoading(false);
       }
-    });
+    }, 4000);
 
-    // 2. Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        const p = await fetchProfile(session.user.id);
-        setProfile(p);
-      } else {
-        setUser(null);
-        setProfile(null);
+    const initAuth = async () => {
+      try {
+        console.log("Auth Initialization Started");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          console.log("Session User Found:", session.user.email);
+          setUser(session.user);
+          const p = await fetchProfile(session.user.id);
+          setProfile(p);
+        } else {
+          console.log("No Session User Found");
+        }
+      } catch (err) {
+        console.error("Auth Initialization Error:", err);
+      } finally {
+        if (active) {
+          setLoading(false);
+          clearTimeout(safetyTimeout);
+          console.log("Auth Initialization Complete");
+        }
       }
-      setLoading(false);
+    };
+
+    initAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth State Changed Event:", event);
+      try {
+        if (session?.user) {
+          setUser(session.user);
+          const p = await fetchProfile(session.user.id);
+          setProfile(p);
+        } else {
+          setUser(null);
+          setProfile(null);
+        }
+      } catch (err) {
+        console.error("Auth State Change Error:", err);
+      } finally {
+        if (active) {
+          setLoading(false);
+          clearTimeout(safetyTimeout);
+        }
+      }
     });
 
     return () => {
+      active = false;
+      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
   }, []);
