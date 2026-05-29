@@ -2,14 +2,50 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { blogPosts } from '../data/siteData';
+import { supabase } from '../lib/supabaseClient';
 import './BlogPage.css';
 
 gsap.registerPlugin(ScrollTrigger);
 
+const getAuthorInfo = (id) => {
+  const authors = [
+    { name: 'Marco Bianchi', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80' },
+    { name: 'Sofia Romano', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&q=80' },
+    { name: 'Luca Ferrari', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80' }
+  ];
+  return authors[Number(id) % 3];
+};
+
+const getReadTime = (content) => {
+  try {
+    const text = Array.isArray(content) 
+      ? content.map(c => (c.body || '')).join(' ') 
+      : (typeof content === 'string' ? content : '');
+    const words = text.split(/\s+/).length;
+    const mins = Math.max(1, Math.round(words / 200));
+    return `${mins} min read`;
+  } catch (e) {
+    return '5 min read';
+  }
+};
+
+const formatBlogDate = (dateStr) => {
+  try {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  } catch (e) {
+    return 'N/A';
+  }
+};
+
 export default function BlogPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [blogsList, setBlogsList] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const heroRef    = useRef(null);
   const gridRef    = useRef(null);
@@ -19,26 +55,66 @@ export default function BlogPage() {
   const categories = ['All', 'Brewing Tips', 'Coffee Culture', 'Recipes', 'Cafe Stories', 'Reviews', 'Barista Guides'];
   const popularTopics = ['Espresso', 'Latte Art', 'Coffee Beans', 'Brewing', 'Specialty Coffee', 'Cafe Lifestyle'];
 
-  // Stagger reveal on page mount
+  // Fetch blogs from Supabase
   useEffect(() => {
-    gsap.fromTo(
-      heroRef.current?.querySelectorAll('[data-hero-anim]'),
-      { y: 40, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.8, stagger: 0.15, ease: 'power4.out', delay: 0.15 }
-    );
+    const fetchBlogs = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('blogs')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setBlogsList(data || []);
+      } catch (err) {
+        console.error('Error fetching blogs:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBlogs();
   }, []);
 
-  // Filter blog posts based on category and search query
+  // Stagger reveal on page mount
+  useEffect(() => {
+    if (heroRef.current) {
+      gsap.fromTo(
+        heroRef.current.querySelectorAll('[data-hero-anim]'),
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.8, stagger: 0.15, ease: 'power4.out', delay: 0.15 }
+      );
+    }
+  }, []);
+
+  // Map and filter blog posts based on category and search query
   const filteredPosts = useMemo(() => {
-    return blogPosts.filter((post) => {
-      const matchesCategory = activeCategory === 'All' || post.category === activeCategory;
-      const matchesSearch =
-        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.category.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [activeCategory, searchQuery]);
+    return blogsList
+      .map((post) => {
+        const authorInfo = getAuthorInfo(post.id);
+        return {
+          id: post.id,
+          slug: post.slug,
+          title: post.title,
+          category: post.category,
+          date: formatBlogDate(post.created_at),
+          author: authorInfo.name,
+          authorAvatar: authorInfo.avatar,
+          excerpt: post.short_description || '',
+          image: post.image_url,
+          readTime: getReadTime(post.content),
+        };
+      })
+      .filter((post) => {
+        const matchesCategory = activeCategory === 'All' || post.category === activeCategory;
+        const matchesSearch =
+          post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          post.category.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
+      });
+  }, [blogsList, activeCategory, searchQuery]);
+
 
   // Split into Featured and Grid posts
   const featuredPost = filteredPosts[0];

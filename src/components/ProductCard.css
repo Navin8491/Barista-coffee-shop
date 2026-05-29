@@ -168,25 +168,27 @@
   }
 }
 
-/* Favorites Heart Button Overlay */
+/* Favorite button overlay */
 .product-card__favorite {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  z-index: 2;
-  background: rgba(255, 255, 255, 0.9);
-  border: none;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
+  z-index: 4;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(181, 106, 45, 0.1);
   border-radius: 50%;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  font-size: 0.95rem;
-  transition: transform 0.2s, background-color 0.2s;
-  outline: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.3s, background-color 0.3s;
+  font-size: 1.1rem;
+  color: var(--coffee);
 }
 
 .product-card__favorite:hover {
@@ -194,7 +196,24 @@
   background: var(--white);
 }
 
-.product-card__favorite.is-favorite {
-  background: var(--white);
+.product-card__favorite.active {
+  color: #dc3545;
+}
+
+/* Reviews trigger cursor */
+.product-card__reviews-trigger {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.product-card__reviews-count {
+  font-size: 0.72rem;
+  color: var(--coffee);
+  text-decoration: underline;
 }
 

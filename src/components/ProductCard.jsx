@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
-import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../context/AuthContext';
+import ReviewsModal from './ReviewsModal';
 import './ProductCard.css';
 
 function Stars({ rating }) {
@@ -25,62 +25,77 @@ function getBadgeClass(tag) {
 
 export default function ProductCard({ product, onAddToCart }) {
   const { user } = useAuth();
+  
+  const [avgRating, setAvgRating] = useState(product.rating || 5);
+  const [reviewCount, setReviewCount] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  // Check if item is in user favorites
-  useEffect(() => {
-    if (!user) {
-      setIsFavorite(false);
-      return;
-    }
+  const fetchProductStats = async () => {
+    try {
+      // 1. Fetch reviews
+      const { data: revData, error: revError } = await supabase
+        .from('reviews')
+        .select('rating')
+        .eq('product_id', product.id);
 
-    const checkFavorite = async () => {
-      try {
-        const { data, error } = await supabase
+      if (revError) throw revError;
+
+      if (revData && revData.length > 0) {
+        const avg = revData.reduce((sum, r) => sum + r.rating, 0) / revData.length;
+        setAvgRating(Math.round(avg));
+        setReviewCount(revData.length);
+      } else {
+        // Fallback to static product rating or 5
+        setAvgRating(product.rating || 5);
+        setReviewCount(0);
+      }
+
+      // 2. Fetch favorite status
+      if (user) {
+        const { data: favData, error: favError } = await supabase
           .from('favorites')
-          .select('*')
+          .select('id')
           .eq('user_id', user.id)
           .eq('product_id', product.id)
           .maybeSingle();
 
-        if (error) throw error;
-        setIsFavorite(!!data);
-      } catch (err) {
-        console.warn('Error checking favorite:', err);
+        if (favError) throw favError;
+        setIsFavorite(!!favData);
+      } else {
+        setIsFavorite(false);
       }
-    };
+    } catch (err) {
+      console.error('Error fetching product stats:', err);
+    }
+  };
 
-    checkFavorite();
-  }, [user, product.id]);
+  useEffect(() => {
+    fetchProductStats();
+  }, [product.id, user]);
 
-  // Toggle favorite status
-  const handleFavoriteClick = async (e) => {
+  const handleToggleFavorite = async (e) => {
     e.stopPropagation();
-    
     if (!user) {
-      alert('Please sign in to save products to your favorites.');
+      alert('Please sign in to add favorites!');
       return;
     }
 
     try {
       if (isFavorite) {
-        const { error } = await supabase
+        await supabase
           .from('favorites')
           .delete()
           .eq('user_id', user.id)
           .eq('product_id', product.id);
-
-        if (error) throw error;
         setIsFavorite(false);
       } else {
-        const { error } = await supabase
+        await supabase
           .from('favorites')
           .insert({
             user_id: user.id,
             product_id: product.id,
           });
-
-        if (error) throw error;
         setIsFavorite(true);
       }
     } catch (err) {
@@ -88,61 +103,85 @@ export default function ProductCard({ product, onAddToCart }) {
     }
   };
 
+  const productPrice = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+  const originalPrice = product.originalPrice ? (typeof product.originalPrice === 'string' ? parseFloat(product.originalPrice) : product.originalPrice) : null;
+  const productImg = product.image_url || product.image;
+
   return (
-    <div className="product-card card">
-      <div className="product-card__img-wrap">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="product-card__img"
-          loading="lazy"
-        />
-        {product.tag && (
-          <span className={`badge product-card__badge ${getBadgeClass(product.tag)}`}>
-            {product.tag}
-          </span>
-        )}
+    <>
+      <div className="product-card card">
+        <div className="product-card__img-wrap">
+          <img
+            src={productImg}
+            alt={product.name}
+            className="product-card__img"
+            loading="lazy"
+          />
+          {product.tag && (
+            <span className={`badge product-card__badge ${getBadgeClass(product.tag)}`}>
+              {product.tag}
+            </span>
+          )}
 
-        {/* Favorite Bookmark Heart Button */}
-        <button
-          className={`product-card__favorite${isFavorite ? ' is-favorite' : ''}`}
-          onClick={handleFavoriteClick}
-          aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-        >
-          {isFavorite ? '❤️' : '🤍'}
-        </button>
+          {/* Favorite button */}
+          <button
+            className={`product-card__favorite${isFavorite ? ' active' : ''}`}
+            onClick={handleToggleFavorite}
+            aria-label={isFavorite ? `Remove ${product.name} from favorites` : `Add ${product.name} to favorites`}
+          >
+            ❤️
+          </button>
 
-        <button
-          className="product-card__quick-add"
-          onClick={() => onAddToCart(product)}
-          aria-label={`Add ${product.name} to cart`}
-        >
-          + Add to Cart
-        </button>
-      </div>
-
-      <div className="product-card__body">
-        <span className="product-card__category">{product.category}</span>
-        <h3 className="product-card__name">{product.name}</h3>
-        <p className="product-card__desc">{product.description}</p>
-
-        <div className="product-card__footer">
-          <div className="product-card__price-wrap">
-            <span className="product-card__price">${product.price.toFixed(2)}</span>
-            {product.originalPrice && (
-              <span className="product-card__original">${product.originalPrice.toFixed(2)}</span>
-            )}
-          </div>
-          <Stars rating={product.rating || 5} />
+          <button
+            className="product-card__quick-add"
+            onClick={() => onAddToCart(product)}
+            aria-label={`Add ${product.name} to cart`}
+          >
+            + Add to Cart
+          </button>
         </div>
 
-        <button
-          className="btn btn-outline product-card__btn"
-          onClick={() => onAddToCart(product)}
-        >
-          Add to Cart
-        </button>
+        <div className="product-card__body">
+          <span className="product-card__category">{product.category}</span>
+          <h3 className="product-card__name">{product.name}</h3>
+          <p className="product-card__desc">{product.description}</p>
+
+          <div className="product-card__footer">
+            <div className="product-card__price-wrap">
+              <span className="product-card__price">${productPrice.toFixed(2)}</span>
+              {originalPrice && (
+                <span className="product-card__original">${originalPrice.toFixed(2)}</span>
+              )}
+            </div>
+            
+            {/* Reviews Trigger */}
+            <button 
+              className="product-card__reviews-trigger" 
+              onClick={() => setModalOpen(true)}
+              aria-label="View reviews"
+            >
+              <Stars rating={avgRating} />
+              <span className="product-card__reviews-count">({reviewCount})</span>
+            </button>
+          </div>
+
+          <button
+            className="btn btn-outline product-card__btn"
+            onClick={() => onAddToCart(product)}
+          >
+            Add to Cart
+          </button>
+        </div>
       </div>
-    </div>
+
+      <ReviewsModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        productId={product.id}
+        productName={product.name}
+        onReviewSubmitted={fetchProductStats}
+      />
+    </>
   );
 }
+

@@ -1,45 +1,46 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
-import { supabase } from '../supabaseClient';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 import './CheckoutPage.css';
 
 export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClearCart }) {
+  const { user, profile } = useAuth();
   const pageRef = useRef(null);
   const cardRef = useRef(null);
   const formRef = useRef(null);
   const priceRef = useRef(null);
 
-  const { user, profile } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     phone: '',
     address: '',
     city: '',
-    zip: ''
+    zip: '',
+    paymentMethod: 'Credit Card'
   });
 
   const [orderPlaced, setOrderPlaced] = useState(false);
-  const [orderSummary, setOrderSummary] = useState({ items: [], total: 0 });
-  const [dbLoading, setDbLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [orderSummary, setOrderSummary] = useState({ items: [], total: 0, paymentMethod: 'Credit Card' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
   const shipping = cartItems.length > 0 ? 5.00 : 0;
   const total = subtotal + shipping;
 
-  // Prepopulate form if profile is loaded
+  // Pre-populate name and email from profile
   useEffect(() => {
     if (profile) {
       setFormData((prev) => ({
         ...prev,
         fullName: profile.full_name || '',
-        email: profile.email || user?.email || '',
+        email: profile.email || '',
       }));
     }
-  }, [profile, user]);
+  }, [profile]);
 
   useEffect(() => {
     if (orderPlaced || cartItems.length === 0) {
@@ -82,37 +83,53 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    setDbLoading(true);
-    setErrorMsg('');
+    if (!user) return;
+
+    setError('');
+    setLoading(true);
 
     try {
-      if (!user) {
-        throw new Error('Please sign in to place an order.');
-      }
-
-      // Record order in Supabase orders table
-      const { error } = await supabase
+      // 1. Create order
+      const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: user.id,
           total_amount: total,
-          status: 'Completed' // Immediate completed pickup order state
-        });
+          payment_method: formData.paymentMethod,
+          order_status: 'Pending'
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (orderError) throw orderError;
 
+      // 2. Create order items
+      const orderItems = cartItems.map((item) => ({
+        order_id: orderData.id,
+        product_id: item.id,
+        quantity: item.qty,
+        price: item.price
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      // 3. Update state and clear cart
       setOrderSummary({
         items: [...cartItems],
-        total: total
+        total: total,
+        paymentMethod: formData.paymentMethod
       });
       setOrderPlaced(true);
-      
-      // Clear cart context state & clean up table cart_items
-      await onClearCart();
+      onClearCart();
     } catch (err) {
-      setErrorMsg(err.message || 'Failed to place order. Please try again.');
+      console.error('Error placing order:', err);
+      setError(err.message || 'Failed to place order. Please try again.');
     } finally {
-      setDbLoading(false);
+      setLoading(false);
     }
   };
 
@@ -148,7 +165,7 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
                 ))}
               </div>
               <div className="checkout-success-total">
-                <span>Total Paid</span>
+                <span>Total Paid via ({orderSummary.paymentMethod})</span>
                 <strong>${orderSummary.total.toFixed(2)}</strong>
               </div>
             </div>
@@ -209,6 +226,8 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
           </Link>
         </div>
 
+        {error && <div className="auth-error" style={{ marginBottom: '2rem' }}>{error}</div>}
+
         <div className="checkout-grid">
           {/* Billing Form */}
           <div className="checkout-form-card" ref={formRef}>
@@ -217,36 +236,63 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
               <div className="checkout-form-row">
                 <div className="form-group">
                   <label htmlFor="fullName">Full Name</label>
-                  <input type="text" id="fullName" name="fullName" value={formData.fullName} onChange={handleChange} required placeholder="John Doe" />
+                  <input type="text" id="fullName" name="fullName" value={formData.fullName} onChange={handleChange} required placeholder="John Doe" disabled={loading} />
                 </div>
                 <div className="form-group">
                   <label htmlFor="email">Email Address</label>
-                  <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required placeholder="john@example.com" />
+                  <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required placeholder="john@example.com" disabled={loading} />
                 </div>
               </div>
               
               <div className="checkout-form-row">
                 <div className="form-group">
                   <label htmlFor="phone">Phone Number</label>
-                  <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} required placeholder="+1 (555) 000-0000" />
+                  <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} required placeholder="+1 (555) 000-0000" disabled={loading} />
                 </div>
               </div>
 
               <div className="checkout-form-row">
                 <div className="form-group">
                   <label htmlFor="address">Street Address</label>
-                  <input type="text" id="address" name="address" value={formData.address} onChange={handleChange} required placeholder="123 Coffee St" />
+                  <input type="text" id="address" name="address" value={formData.address} onChange={handleChange} required placeholder="123 Coffee St" disabled={loading} />
                 </div>
               </div>
 
               <div className="checkout-form-row">
                 <div className="form-group">
                   <label htmlFor="city">City</label>
-                  <input type="text" id="city" name="city" value={formData.city} onChange={handleChange} required placeholder="Milan" />
+                  <input type="text" id="city" name="city" value={formData.city} onChange={handleChange} required placeholder="Milan" disabled={loading} />
                 </div>
                 <div className="form-group">
                   <label htmlFor="zip">ZIP / Postal Code</label>
-                  <input type="text" id="zip" name="zip" value={formData.zip} onChange={handleChange} required placeholder="20121" />
+                  <input type="text" id="zip" name="zip" value={formData.zip} onChange={handleChange} required placeholder="20121" disabled={loading} />
+                </div>
+              </div>
+
+              <div className="checkout-form-row">
+                <div className="form-group">
+                  <label htmlFor="paymentMethod">Payment Method</label>
+                  <select 
+                    id="paymentMethod" 
+                    name="paymentMethod" 
+                    value={formData.paymentMethod} 
+                    onChange={handleChange}
+                    style={{
+                      padding: '0.85rem 1.1rem',
+                      border: '1.5px solid var(--gray-300)',
+                      borderRadius: 'var(--radius-md)',
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '0.95rem',
+                      color: 'var(--dark)',
+                      background: 'var(--white)',
+                      outline: 'none'
+                    }}
+                    disabled={loading}
+                  >
+                    <option value="Credit Card">Credit Card</option>
+                    <option value="PayPal">PayPal</option>
+                    <option value="Cash on Delivery">Cash on Delivery</option>
+                  </select>
                 </div>
               </div>
 
@@ -270,12 +316,12 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
                     <h3 className="checkout-item__name">{item.name}</h3>
                     <p className="checkout-item__price">${(item.price * item.qty).toFixed(2)}</p>
                     <div className="checkout-item__qty">
-                      <button onClick={() => onUpdateQty(item.id, item.qty - 1)} aria-label="Decrease">−</button>
+                      <button onClick={() => onUpdateQty(item.id, item.qty - 1)} aria-label="Decrease" disabled={loading}>−</button>
                       <span>{item.qty}</span>
-                      <button onClick={() => onUpdateQty(item.id, item.qty + 1)} aria-label="Increase">+</button>
+                      <button onClick={() => onUpdateQty(item.id, item.qty + 1)} aria-label="Increase" disabled={loading}>+</button>
                     </div>
                   </div>
-                  <button className="checkout-item__remove" onClick={() => onRemove(item.id)} aria-label="Remove item">✕</button>
+                  <button className="checkout-item__remove" onClick={() => onRemove(item.id)} aria-label="Remove item" disabled={loading}>✕</button>
                 </div>
               ))}
             </div>
@@ -295,12 +341,6 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
               </div>
             </div>
 
-            {errorMsg && (
-              <div className="checkout-error" style={{ background: '#fdf2f2', color: '#c81e1e', border: '1px solid #fde8e8', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', margin: '1rem 0', fontSize: '0.85rem', fontWeight: 500 }}>
-                ⚠️ {errorMsg}
-              </div>
-            )}
-
             <div className="checkout-actions">
               <button 
                 className="btn btn-primary btn-place-order" 
@@ -308,9 +348,9 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
                 onMouseEnter={buttonHover}
                 onMouseLeave={buttonLeave}
                 onMouseDown={buttonClick}
-                disabled={dbLoading}
+                disabled={loading}
               >
-                {dbLoading ? 'Processing...' : 'Place Order'}
+                {loading ? 'Processing...' : 'Place Order'}
               </button>
               <Link 
                 to="/menu" 
@@ -328,3 +368,4 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
     </main>
   );
 }
+

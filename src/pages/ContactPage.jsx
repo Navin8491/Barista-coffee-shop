@@ -1,41 +1,45 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { siteInfo } from '../data/siteData';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 import './ContactPage.css';
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
   const headerRef = useRef(null);
   const formRef   = useRef(null);
   const infoRef   = useRef(null);
 
   useEffect(() => {
-    gsap.fromTo(
-      headerRef.current?.querySelectorAll('[data-anim]'),
-      { y: 30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.7, stagger: 0.15, ease: 'power3.out', delay: 0.2 }
-    );
-    gsap.fromTo(
-      [formRef.current, infoRef.current],
-      { y: 50, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.75, stagger: 0.15, ease: 'power3.out', delay: 0.4 }
-    );
+    if (headerRef.current) {
+      gsap.fromTo(
+        headerRef.current.querySelectorAll('[data-anim]'),
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, stagger: 0.15, ease: 'power3.out', delay: 0.2 }
+      );
+    }
+    if (formRef.current && infoRef.current) {
+      gsap.fromTo(
+        [formRef.current, infoRef.current],
+        { y: 50, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.75, stagger: 0.15, ease: 'power3.out', delay: 0.4 }
+      );
+    }
   }, []);
-
-  const [errorMsg, setErrorMsg] = useState('');
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setErrorMsg('');
-
+    setError('');
+    
     try {
-      const { error } = await supabase
+      const { error: dbError } = await supabase
         .from('contact_messages')
         .insert({
           name: form.name,
@@ -44,16 +48,18 @@ export default function ContactPage() {
           message: form.message
         });
 
-      if (error) throw error;
+      if (dbError) throw dbError;
 
       setSubmitted(true);
       setForm({ name: '', email: '', subject: '', message: '' });
     } catch (err) {
-      setErrorMsg(err.message || 'Failed to submit your message. Please try again.');
+      console.error('Error submitting contact form:', err);
+      setError(err.message || 'Failed to send message. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <>
@@ -73,11 +79,7 @@ export default function ContactPage() {
             {/* Form */}
             <div ref={formRef} className="contact-form-wrap card">
               <h3 className="contact-form__title">Send a Message</h3>
-              {errorMsg && (
-                <div className="contact-error" style={{ background: '#fdf2f2', color: '#c81e1e', border: '1px solid #fde8e8', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', fontSize: '0.85rem', fontWeight: 500 }}>
-                  ⚠️ {errorMsg}
-                </div>
-              )}
+              {error && <div className="auth-error" style={{ marginBottom: '1rem' }}>{error}</div>}
               {submitted ? (
                 <div className="contact-success">
                   <span>✅</span>
@@ -89,6 +91,7 @@ export default function ContactPage() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="contact-form">
+
                   <div className="form-row">
                     <div className="form-group">
                       <label htmlFor="contact-name">Your Name</label>

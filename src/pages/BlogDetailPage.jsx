@@ -1,16 +1,114 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { gsap } from 'gsap';
-import { blogPosts } from '../data/siteData';
+import { supabase } from '../lib/supabaseClient';
 import './BlogDetailPage.css';
+
+const getAuthorInfo = (id) => {
+  const authors = [
+    { name: 'Marco Bianchi', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80' },
+    { name: 'Sofia Romano', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&q=80' },
+    { name: 'Luca Ferrari', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80' }
+  ];
+  return authors[Number(id) % 3];
+};
+
+const getReadTime = (content) => {
+  try {
+    const text = Array.isArray(content) 
+      ? content.map(c => (c.body || '')).join(' ') 
+      : (typeof content === 'string' ? content : '');
+    const words = text.split(/\s+/).length;
+    const mins = Math.max(1, Math.round(words / 200));
+    return `${mins} min read`;
+  } catch (e) {
+    return '5 min read';
+  }
+};
+
+const formatBlogDate = (dateStr) => {
+  try {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  } catch (e) {
+    return 'N/A';
+  }
+};
 
 export default function BlogDetailPage() {
   const { id } = useParams();
-  const post = blogPosts.find((p) => p.id === Number(id));
+  const [post, setPost] = useState(null);
+  const [allBlogs, setAllBlogs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const heroRef    = useRef(null);
   const contentRef = useRef(null);
   const [copied, setCopied] = useState(false);
+
+  // Fetch current post and all posts on mount / id change
+  useEffect(() => {
+    const fetchPostDetails = async () => {
+      setLoading(true);
+      try {
+        // Fetch current post
+        const { data: currentData, error: currentError } = await supabase
+          .from('blogs')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (currentError) throw currentError;
+
+        if (currentData) {
+          const authInfo = getAuthorInfo(currentData.id);
+          setPost({
+            id: currentData.id,
+            title: currentData.title,
+            category: currentData.category,
+            date: formatBlogDate(currentData.created_at),
+            author: authInfo.name,
+            authorAvatar: authInfo.avatar,
+            excerpt: currentData.short_description || '',
+            image: currentData.image_url,
+            readTime: getReadTime(currentData.content),
+            fullContent: Array.isArray(currentData.content) ? currentData.content : [],
+          });
+        }
+
+        // Fetch all posts for related section
+        const { data: listData, error: listError } = await supabase
+          .from('blogs')
+          .select('*');
+
+        if (listError) throw listError;
+
+        if (listData) {
+          const mapped = listData.map((b) => {
+            const authInfo = getAuthorInfo(b.id);
+            return {
+              id: b.id,
+              title: b.title,
+              category: b.category,
+              author: authInfo.name,
+              image: b.image_url,
+              readTime: getReadTime(b.content),
+            };
+          });
+          setAllBlogs(mapped);
+        }
+      } catch (err) {
+        console.error('Error fetching blog details:', err);
+        setPost(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPostDetails();
+  }, [id]);
 
   useEffect(() => {
     if (!post) return;
@@ -32,12 +130,13 @@ export default function BlogDetailPage() {
 
   // Related posts prioritization (same category first)
   const relatedPosts = useMemo(() => {
-    if (!post) return [];
-    const sameCat = blogPosts.filter((p) => p.id !== post.id && p.category === post.category);
+    if (!post || allBlogs.length === 0) return [];
+    const sameCat = allBlogs.filter((p) => p.id !== post.id && p.category === post.category);
     if (sameCat.length >= 3) return sameCat.slice(0, 3);
-    const diffCat = blogPosts.filter((p) => p.id !== post.id && p.category !== post.category);
+    const diffCat = allBlogs.filter((p) => p.id !== post.id && p.category !== post.category);
     return [...sameCat, ...diffCat].slice(0, 3);
-  }, [post]);
+  }, [post, allBlogs]);
+
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -146,17 +245,18 @@ export default function BlogDetailPage() {
 
             {/* Related posts (prev / next in array) */}
             <div className="bd-related">
-              {blogPosts.find((p) => p.id === post.id - 1) && (
+              {allBlogs.find((p) => p.id === post.id - 1) && (
                 <Link to={`/blog/${post.id - 1}`} className="bd-related__link">
                   ‹ Previous Article
                 </Link>
               )}
-              {blogPosts.find((p) => p.id === post.id + 1) && (
+              {allBlogs.find((p) => p.id === post.id + 1) && (
                 <Link to={`/blog/${post.id + 1}`} className="bd-related__link">
                   Next Article ›
                 </Link>
               )}
             </div>
+
           </div>
         </div>
       </article>

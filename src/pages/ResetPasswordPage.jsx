@@ -1,24 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './LoginPage.css';
 
-export default function RegisterPage() {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
+export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signUp, user } = useAuth();
+  const { updatePassword } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (user) {
-      navigate('/profile');
-    }
-  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,14 +27,14 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await signUp(email, password, fullName);
-      setSuccess('Account created successfully! Redirecting...');
+      await updatePassword(password);
+      setSuccess('Password updated successfully! Redirecting to login...');
       setTimeout(() => {
-        navigate('/profile');
-      }, 1500);
+        navigate('/login');
+      }, 2000);
     } catch (err) {
       console.error(err);
-      setError(err.message || 'Failed to register account.');
+      setError(err.message || 'Failed to update password.');
       setLoading(false);
     }
   };
@@ -52,8 +44,8 @@ export default function RegisterPage() {
       <div className="container" style={{ display: 'flex', justifyContent: 'center' }}>
         <div className="auth-card">
           <div className="auth-header">
-            <h2>Create Account</h2>
-            <p>Join the Barista Coffee community and enjoy fresh brews</p>
+            <h2>Enter New Password</h2>
+            <p>Type in your new secure password below</p>
           </div>
 
           {error && <div className="auth-error">{error}</div>}
@@ -61,33 +53,7 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="form-group">
-              <label htmlFor="fullName">Full Name</label>
-              <input
-                type="text"
-                id="fullName"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="John Doe"
-                disabled={loading || success}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="email">Email Address</label>
-              <input
-                type="email"
-                id="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@example.com"
-                disabled={loading || success}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
+              <label htmlFor="password">New Password</label>
               <input
                 type="password"
                 id="password"
@@ -117,14 +83,9 @@ export default function RegisterPage() {
               className="btn btn-primary auth-btn"
               disabled={loading || success}
             >
-              {loading ? 'Creating Account...' : 'Register'}
+              {loading ? 'Updating Password...' : 'Save Password'}
             </button>
           </form>
-
-          <div className="auth-footer">
-            Already have an account?
-            <Link to="/login">Sign In Here</Link>
-          </div>
         </div>
       </div>
     </main>
