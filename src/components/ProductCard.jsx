@@ -33,13 +33,15 @@ export default function ProductCard({ product, onAddToCart }) {
 
   const fetchProductStats = async () => {
     try {
+      console.log("Before Product Reviews Fetch");
       const { data: revData, error: revError } = await supabase
         .from('reviews')
         .select('rating')
         .eq('product_id', product.id);
 
-      console.log("DATA:", revData);
-      console.log("ERROR:", revError);
+      console.log("After Product Reviews Fetch");
+      console.log("Product Reviews Data:", revData);
+      console.log("Product Reviews Error:", revError);
 
       if (revError) throw revError;
 
@@ -55,12 +57,17 @@ export default function ProductCard({ product, onAddToCart }) {
 
       // 2. Fetch favorite status
       if (user) {
+        console.log("Before Product Favorite Fetch");
         const { data: favData, error: favError } = await supabase
           .from('favorites')
           .select('id')
           .eq('user_id', user.id)
           .eq('product_id', product.id)
           .maybeSingle();
+
+        console.log("After Product Favorite Fetch");
+        console.log("Product Favorite Data:", favData);
+        console.log("Product Favorite Error:", favError);
 
         if (favError) throw favError;
         setIsFavorite(!!favData);
@@ -85,19 +92,35 @@ export default function ProductCard({ product, onAddToCart }) {
 
     try {
       if (isFavorite) {
-        await supabase
+        console.log("Before Favorite Delete");
+        const { data, error } = await supabase
           .from('favorites')
           .delete()
           .eq('user_id', user.id)
-          .eq('product_id', product.id);
+          .eq('product_id', product.id)
+          .select();
+
+        console.log("After Favorite Delete");
+        console.log("Favorite Delete Data:", data);
+        console.log("Favorite Delete Error:", error);
+
+        if (error) throw error;
         setIsFavorite(false);
       } else {
-        await supabase
+        console.log("Before Favorite Insert");
+        const { data, error } = await supabase
           .from('favorites')
           .insert({
             user_id: user.id,
             product_id: product.id,
-          });
+          })
+          .select();
+
+        console.log("After Favorite Insert");
+        console.log("Favorite Insert Data:", data);
+        console.log("Favorite Insert Error:", error);
+
+        if (error) throw error;
         setIsFavorite(true);
       }
     } catch (err) {

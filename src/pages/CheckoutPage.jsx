@@ -90,6 +90,7 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
 
     try {
       // 1. Create order
+      console.log("Before Order Insert");
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -101,6 +102,10 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
         .select()
         .single();
 
+      console.log("After Order Insert");
+      console.log("Order Insert Data:", orderData);
+      console.log("Order Insert Error:", orderError);
+
       if (orderError) throw orderError;
 
       // 2. Create order items
@@ -111,9 +116,15 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
         price: item.price
       }));
 
-      const { error: itemsError } = await supabase
+      console.log("Before Order Items Insert");
+      const { data: itemsData, error: itemsError } = await supabase
         .from('order_items')
-        .insert(orderItems);
+        .insert(orderItems)
+        .select();
+
+      console.log("After Order Items Insert");
+      console.log("Order Items Insert Data:", itemsData);
+      console.log("Order Items Insert Error:", itemsError);
 
       if (itemsError) throw itemsError;
 

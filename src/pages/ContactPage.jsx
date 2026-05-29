@@ -39,14 +39,20 @@ export default function ContactPage() {
     setError('');
     
     try {
-      const { error: dbError } = await supabase
+      console.log("Before Contact Message Insert");
+      const { data, error: dbError } = await supabase
         .from('contact_messages')
         .insert({
           name: form.name,
           email: form.email,
           subject: form.subject,
           message: form.message
-        });
+        })
+        .select();
+
+      console.log("After Contact Message Insert");
+      console.log("Contact Message Data:", data);
+      console.log("Contact Message Error:", dbError);
 
       if (dbError) throw dbError;
 

@@ -197,9 +197,14 @@ export default function ProfilePage() {
     setUpdating(true);
     try {
       // 1. Upload to bucket
-      const { error: uploadError } = await supabase.storage
+      console.log("Before Avatar Upload");
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { cacheControl: '3600', upsert: true });
+
+      console.log("After Avatar Upload");
+      console.log("Avatar Upload Data:", uploadData);
+      console.log("Avatar Upload Error:", uploadError);
 
       if (uploadError) throw uploadError;
 
@@ -220,10 +225,16 @@ export default function ProfilePage() {
 
   const handleRemoveFavorite = async (favId) => {
     try {
-      const { error } = await supabase
+      console.log("Before Favorite Remove");
+      const { data, error } = await supabase
         .from('favorites')
         .delete()
-        .eq('id', favId);
+        .eq('id', favId)
+        .select();
+
+      console.log("After Favorite Remove");
+      console.log("Favorite Remove Data:", data);
+      console.log("Favorite Remove Error:", error);
 
       if (error) throw error;
       setFavorites((prev) => prev.filter((fav) => fav.id !== favId));

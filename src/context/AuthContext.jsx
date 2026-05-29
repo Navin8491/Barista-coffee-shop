@@ -11,14 +11,16 @@ export function AuthProvider({ children }) {
   // Fetch profile matching user_id
   const fetchProfile = async (userId) => {
     try {
+      console.log("Before Profile Fetch");
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
 
-      console.log("DATA:", data);
-      console.log("ERROR:", error);
+      console.log("After Profile Fetch");
+      console.log("Profile Data:", data);
+      console.log("Profile Error:", error);
 
       if (error) {
         console.error('Error fetching profile:', error);
@@ -119,11 +121,26 @@ export function AuthProvider({ children }) {
     if (data?.user) {
       const existing = await fetchProfile(data.user.id);
       if (!existing) {
-        await supabase.from('profiles').insert({
-          user_id: data.user.id,
-          full_name: fullName,
-          email: email
-        });
+        try {
+          console.log("Before Profile Insert");
+          const { data: insertData, error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              user_id: data.user.id,
+              full_name: fullName,
+              email: email
+            })
+            .select()
+            .single();
+
+          console.log("After Profile Insert");
+          console.log("Profile Insert Data:", insertData);
+          console.log("Profile Insert Error:", insertError);
+
+          if (insertError) throw insertError;
+        } catch (err) {
+          console.error("Error inserting fallback profile:", err);
+        }
       }
     }
     return data;
@@ -150,16 +167,26 @@ export function AuthProvider({ children }) {
 
   const updateProfile = async (updates) => {
     if (!user) throw new Error('No logged-in user');
-    const { data, error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('user_id', user.id)
-      .select()
-      .single();
+    try {
+      console.log("Before Profile Update");
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('user_id', user.id)
+        .select()
+        .single();
 
-    if (error) throw error;
-    setProfile(data);
-    return data;
+      console.log("After Profile Update");
+      console.log("Profile Update Data:", data);
+      console.log("Profile Update Error:", error);
+
+      if (error) throw error;
+      setProfile(data);
+      return data;
+    } catch (err) {
+      console.error("Profile Update Failed:", err);
+      throw err;
+    }
   };
 
   const value = {

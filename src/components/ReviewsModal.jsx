@@ -21,7 +21,7 @@ export default function ReviewsModal({ isOpen, onClose, productId, productName, 
     if (!productId) return;
     setLoading(true);
     try {
-      console.log("Fetching reviews from Supabase for product:", productId);
+      console.log("Before Reviews Fetch");
       const { data, error } = await supabase
         .from('reviews')
         .select(`
@@ -38,8 +38,9 @@ export default function ReviewsModal({ isOpen, onClose, productId, productName, 
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
 
-      console.log("DATA:", data);
-      console.log("ERROR:", error);
+      console.log("After Reviews Fetch");
+      console.log("Reviews Data:", data);
+      console.log("Reviews Error:", error);
 
       if (error) throw error;
       setReviews(data || []);
@@ -76,7 +77,8 @@ export default function ReviewsModal({ isOpen, onClose, productId, productName, 
     setSubmitting(true);
 
     try {
-      const { error } = await supabase
+      console.log("Before Review Submit");
+      const { data, error } = await supabase
         .from('reviews')
         .upsert(
           {
@@ -86,7 +88,12 @@ export default function ReviewsModal({ isOpen, onClose, productId, productName, 
             review_text: text,
           },
           { onConflict: 'user_id,product_id' }
-        );
+        )
+        .select();
+
+      console.log("After Review Submit");
+      console.log("Review Submit Data:", data);
+      console.log("Review Submit Error:", error);
 
       if (error) throw error;
       

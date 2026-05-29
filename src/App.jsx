@@ -74,10 +74,15 @@ function AppContent() {
 
     const loadDBCart = async () => {
       try {
+        console.log("Before DBCart Fetch");
         const { data, error } = await supabase
           .from('cart_items')
           .select('product_id, quantity, products(*)')
           .eq('user_id', user.id);
+
+        console.log("After DBCart Fetch");
+        console.log("DBCart Data:", data);
+        console.log("DBCart Error:", error);
 
         if (error) throw error;
         
@@ -100,27 +105,102 @@ function AppContent() {
     loadDBCart();
   }, [user]);
 
+  /* Async Cart Sync Helpers */
+  const syncCartItemUpsert = async (productId, quantity) => {
+    if (!user) return;
+    try {
+      console.log("Before Cart Item Upsert");
+      const { data, error } = await supabase
+        .from('cart_items')
+        .upsert(
+          {
+            user_id: user.id,
+            product_id: productId,
+            quantity: quantity,
+          },
+          { onConflict: 'user_id,product_id' }
+        )
+        .select();
+
+      console.log("After Cart Item Upsert");
+      console.log("Cart Item Upsert Data:", data);
+      console.log("Cart Item Upsert Error:", error);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error syncing cart item upsert:', err);
+    }
+  };
+
+  const syncCartItemDelete = async (productId) => {
+    if (!user) return;
+    try {
+      console.log("Before Cart Item Delete");
+      const { data, error } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('product_id', productId)
+        .select();
+
+      console.log("After Cart Item Delete");
+      console.log("Cart Item Delete Data:", data);
+      console.log("Cart Item Delete Error:", error);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error syncing cart item delete:', err);
+    }
+  };
+
+  const syncCartClear = async () => {
+    if (!user) return;
+    try {
+      console.log("Before Cart Clear");
+      const { data, error } = await supabase
+        .from('cart_items')
+        .delete()
+        .eq('user_id', user.id)
+        .select();
+
+      console.log("After Cart Clear");
+      console.log("Cart Clear Data:", data);
+      console.log("Cart Clear Error:", error);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error syncing cart clear:', err);
+    }
+  };
+
+  const syncCartItemUpdate = async (productId, quantity) => {
+    if (!user) return;
+    try {
+      console.log("Before Cart Item Update");
+      const { data, error } = await supabase
+        .from('cart_items')
+        .update({ quantity: quantity })
+        .eq('user_id', user.id)
+        .eq('product_id', productId)
+        .select();
+
+      console.log("After Cart Item Update");
+      console.log("Cart Item Update Data:", data);
+      console.log("Cart Item Update Error:", error);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error syncing cart item update:', err);
+    }
+  };
+
   /* Add to cart */
   const handleAddToCart = useCallback((product) => {
     setCartItems((prev) => {
       const existing = prev.find((i) => i.id === product.id);
       const newQty = existing ? existing.qty + 1 : 1;
 
-      if (user) {
-        supabase
-          .from('cart_items')
-          .upsert(
-            {
-              user_id: user.id,
-              product_id: product.id,
-              quantity: newQty,
-            },
-            { onConflict: 'user_id,product_id' }
-          )
-          .then(({ error }) => {
-            if (error) console.error('Error saving cart item:', error);
-          });
-      }
+      syncCartItemUpsert(product.id, newQty);
 
       if (existing) {
         return prev.map((i) => i.id === product.id ? { ...i, qty: newQty } : i);
@@ -133,16 +213,7 @@ function AppContent() {
   /* Remove item */
   const handleRemove = useCallback((id) => {
     setCartItems((prev) => {
-      if (user) {
-        supabase
-          .from('cart_items')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('product_id', id)
-          .then(({ error }) => {
-            if (error) console.error('Error deleting cart item:', error);
-          });
-      }
+      syncCartItemDelete(id);
       return prev.filter((i) => i.id !== id);
     });
   }, [user]);
@@ -150,15 +221,7 @@ function AppContent() {
   /* Clear cart */
   const handleClearCart = useCallback((isCheckout = false) => {
     setCartItems((prev) => {
-      if (user) {
-        supabase
-          .from('cart_items')
-          .delete()
-          .eq('user_id', user.id)
-          .then(({ error }) => {
-            if (error) console.error('Error clearing cart:', error);
-          });
-      }
+      syncCartClear();
       return [];
     });
     if (isCheckout) {
@@ -170,28 +233,10 @@ function AppContent() {
   const handleUpdateQty = useCallback((id, qty) => {
     setCartItems((prev) => {
       if (qty <= 0) {
-        if (user) {
-          supabase
-            .from('cart_items')
-            .delete()
-            .eq('user_id', user.id)
-            .eq('product_id', id)
-            .then(({ error }) => {
-              if (error) console.error('Error deleting cart item:', error);
-            });
-        }
+        syncCartItemDelete(id);
         return prev.filter((i) => i.id !== id);
       } else {
-        if (user) {
-          supabase
-            .from('cart_items')
-            .update({ quantity: qty })
-            .eq('user_id', user.id)
-            .eq('product_id', id)
-            .then(({ error }) => {
-              if (error) console.error('Error updating cart qty:', error);
-            });
-        }
+        syncCartItemUpdate(id, qty);
         return prev.map((i) => i.id === id ? { ...i, qty } : i);
       }
     });
