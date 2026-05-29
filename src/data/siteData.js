@@ -147,7 +147,7 @@ export const blogPosts = [
   {
     id: 1,
     title: 'The Secret Behind Perfect Espresso',
-    category: 'Brewing',
+    category: 'Barista Guides',
     date: 'April 18, 2025',
     author: 'Marco Bianchi',
     authorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80',
@@ -215,7 +215,7 @@ export const blogPosts = [
   {
     id: 3,
     title: 'Our Barista Championship Journey',
-    category: 'Stories',
+    category: 'Cafe Stories',
     date: 'March 29, 2025',
     author: 'Luca Ferrari',
     authorAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80',
@@ -249,7 +249,7 @@ export const blogPosts = [
   {
     id: 4,
     title: 'How to Brew Café-Quality Coffee at Home',
-    category: 'Brewing',
+    category: 'Brewing Tips',
     date: 'March 15, 2025',
     author: 'Marco Bianchi',
     authorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80',
@@ -279,7 +279,7 @@ export const blogPosts = [
   {
     id: 5,
     title: 'Seasonal Menu: Spring Florals',
-    category: 'Menu',
+    category: 'Recipes',
     date: 'March 5, 2025',
     author: 'Sofia Romano',
     authorAvatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&q=80',
@@ -309,7 +309,7 @@ export const blogPosts = [
   {
     id: 6,
     title: 'Sustainability at Barista Coffee',
-    category: 'Stories',
+    category: 'Cafe Stories',
     date: 'February 22, 2025',
     author: 'Luca Ferrari',
     authorAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80',
