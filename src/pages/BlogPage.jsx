@@ -46,7 +46,6 @@ export default function BlogPage() {
 
   // Stagger animations when filtered posts change
   useEffect(() => {
-    // Fade up featured card
     if (featuredPost) {
       gsap.fromTo(
         '.blog-featured',
@@ -54,7 +53,6 @@ export default function BlogPage() {
         { y: 0, opacity: 1, duration: 0.65, ease: 'power3.out' }
       );
     }
-    // Stagger fade up normal cards
     const cards = gridRef.current?.querySelectorAll('.blog-card');
     if (cards && cards.length > 0) {
       gsap.fromTo(
@@ -85,59 +83,140 @@ export default function BlogPage() {
     );
   }, [filteredPosts.length]);
 
+  // Parallax elements animations (scroll scrub & mouse move)
+  useEffect(() => {
+    // 1. Scroll Parallax
+    const decors = document.querySelectorAll('.blog-decor');
+    decors.forEach((decor) => {
+      const speed = parseFloat(decor.getAttribute('data-parallax-speed') || '0.2');
+      gsap.to(decor, {
+        yPercent: -180 * speed,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.blog-page',
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 1.2,
+        }
+      });
+    });
+
+    // 2. Mouse Move Drift
+    const handleMouseMove = (e) => {
+      const { clientX, clientY } = e;
+      const xPos = (clientX / window.innerWidth - 0.5) * 35;
+      const yPos = (clientY / window.innerHeight - 0.5) * 35;
+
+      gsap.to('.blog-decor.float-1', { x: xPos * 0.6, y: yPos * 0.6, duration: 1.2, ease: 'power2.out' });
+      gsap.to('.blog-decor.float-2', { x: -xPos * 0.9, y: -yPos * 0.9, duration: 1.4, ease: 'power2.out' });
+      gsap.to('.blog-decor.float-3', { x: xPos * 1.3, y: yPos * 0.7, duration: 1.6, ease: 'power2.out' });
+      gsap.to('.blog-decor.float-4', { x: -xPos * 0.5, y: yPos * 1.2, duration: 1.1, ease: 'power2.out' });
+      gsap.to('.blog-decor.float-5', { x: xPos * 0.8, y: -yPos * 0.6, duration: 1.3, ease: 'power2.out' });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   return (
     <main className="blog-page">
-      {/* ── Magazine Hero ── */}
-      <section className="blog-hero" ref={heroRef}>
-        <div className="blog-hero__overlay" />
-        <div className="container blog-hero__inner">
-          <span className="badge badge-best blog-hero__badge" data-hero-anim>✦ Journal ✦</span>
-          <h1 className="blog-hero__title" data-hero-anim>Coffee Stories & Inspirations</h1>
-          <p className="blog-hero__sub" data-hero-anim>
-            Explore brewing guides, coffee culture, barista secrets, and cafe stories.
-          </p>
-          
-          {/* Search Bar */}
-          <div className="blog-search-bar" data-hero-anim>
-            <span className="blog-search-bar__icon">🔍</span>
-            <input
-              type="text"
-              placeholder="Search articles, categories, tips..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search articles"
-            />
-            {searchQuery && (
-              <button 
-                className="blog-search-bar__clear"
-                onClick={() => setSearchQuery('')}
-                aria-label="Clear search"
-              >
-                ✕
-              </button>
-            )}
+      {/* ── Ambient Background Layering ── */}
+      <div className="blog-decorations-container">
+        <div className="blog-decor float-1" data-parallax-speed="0.25">☕</div>
+        <div className="blog-decor float-2" data-parallax-speed="0.45">🌱</div>
+        <div className="blog-decor float-3" data-parallax-speed="0.30">✨</div>
+        <div className="blog-decor float-4" data-parallax-speed="0.15">🍂</div>
+        <div className="blog-decor float-5" data-parallax-speed="0.35">🟤</div>
+        <div className="blog-bg-glow glow-1" />
+        <div className="blog-bg-glow glow-2" />
+        <div className="blog-bg-glow glow-3" />
+      </div>
+
+      {/* ── Section 1: Hero & Filters (#FCF8F4 with Gradient) ── */}
+      <section className="blog-section-1">
+        {/* Magazine Hero */}
+        <div className="blog-hero" ref={heroRef}>
+          <div className="blog-hero__overlay" />
+          <div className="container blog-hero__inner">
+            <span className="badge badge-best blog-hero__badge" data-hero-anim>✦ Journal ✦</span>
+            <h1 className="blog-hero__title" data-hero-anim>Coffee Stories & Inspirations</h1>
+            <p className="blog-hero__sub" data-hero-anim>
+              Explore brewing guides, coffee culture, barista secrets, and cafe stories.
+            </p>
+            
+            {/* Search Bar */}
+            <div className="blog-search-bar" data-hero-anim>
+              <span className="blog-search-bar__icon">🔍</span>
+              <input
+                type="text"
+                placeholder="Search articles, categories, tips..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label="Search articles"
+              />
+              {searchQuery && (
+                <button 
+                  className="blog-search-bar__clear"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="blog-filters-section">
+          <div className="container">
+            <div className="blog-filters">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  className={`blog-filter-btn${activeCategory === cat ? ' active' : ''}`}
+                  onClick={() => setActiveCategory(cat)}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── Filter Tabs ── */}
-      <section className="blog-filters-section">
-        <div className="container">
-          <div className="blog-filters">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                className={`blog-filter-btn${activeCategory === cat ? ' active' : ''}`}
-                onClick={() => setActiveCategory(cat)}
-              >
-                {cat}
-              </button>
-            ))}
+      {/* ── Section 2: Featured Article (#FFFDFB) ── */}
+      {filteredPosts.length > 0 && featuredPost && (
+        <section className="blog-featured-section section-pad">
+          <div className="container">
+            <div className="blog-featured">
+              <div className="blog-featured__img-wrap">
+                <img src={featuredPost.image} alt={featuredPost.title} className="blog-featured__img" />
+                <span className="badge badge-best blog-featured__cat">{featuredPost.category}</span>
+              </div>
+              <div className="blog-featured__content">
+                <p className="blog-featured__label">★ Featured Editorial</p>
+                <h2 className="blog-featured__title">{featuredPost.title}</h2>
+                <p className="blog-featured__excerpt">{featuredPost.excerpt}</p>
+                
+                <div className="blog-featured__meta">
+                  <img src={featuredPost.authorAvatar} alt={featuredPost.author} className="blog-featured__avatar" />
+                  <div>
+                    <strong>{featuredPost.author}</strong>
+                    <span>📅 {featuredPost.date} &nbsp;•&nbsp; ⏱ {featuredPost.readTime}</span>
+                  </div>
+                </div>
+                
+                <Link to={`/blog/${featuredPost.id}`} className="btn btn-primary blog-featured__btn">
+                  Read Full Article
+                </Link>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* ── Articles Feed ── */}
+      {/* ── Section 3: Articles Grid Feed (#F8F1EA) ── */}
       <section className="blog-feed-section section-pad">
         <div className="container">
           {filteredPosts.length === 0 ? (
@@ -154,34 +233,6 @@ export default function BlogPage() {
             </div>
           ) : (
             <>
-              {/* Featured Article */}
-              {featuredPost && (
-                <div className="blog-featured">
-                  <div className="blog-featured__img-wrap">
-                    <img src={featuredPost.image} alt={featuredPost.title} className="blog-featured__img" />
-                    <span className="badge badge-best blog-featured__cat">{featuredPost.category}</span>
-                  </div>
-                  <div className="blog-featured__content">
-                    <p className="blog-featured__label">★ Featured Editorial</p>
-                    <h2 className="blog-featured__title">{featuredPost.title}</h2>
-                    <p className="blog-featured__excerpt">{featuredPost.excerpt}</p>
-                    
-                    <div className="blog-featured__meta">
-                      <img src={featuredPost.authorAvatar} alt={featuredPost.author} className="blog-featured__avatar" />
-                      <div>
-                        <strong>{featuredPost.author}</strong>
-                        <span>📅 {featuredPost.date} &nbsp;•&nbsp; ⏱ {featuredPost.readTime}</span>
-                      </div>
-                    </div>
-                    
-                    <Link to={`/blog/${featuredPost.id}`} className="btn btn-primary blog-featured__btn">
-                      Read Full Article
-                    </Link>
-                  </div>
-                </div>
-              )}
-
-              {/* Grid Articles */}
               {gridPosts.length > 0 && (
                 <div className="grid-3 blog-grid" ref={gridRef}>
                   {gridPosts.map((post, idx) => (
@@ -210,7 +261,7 @@ export default function BlogPage() {
                         </div>
                       </article>
 
-                      {/* Coffee Quote Breakout - Injected dynamically after the 2nd grid card (index 1) */}
+                      {/* Coffee Quote Breakout - Injected dynamically after the 2nd grid card */}
                       {idx === 1 && (
                         <div className="blog-quote" ref={quoteRef}>
                           <div className="blog-quote__inner">
@@ -229,7 +280,7 @@ export default function BlogPage() {
         </div>
       </section>
 
-      {/* ── Popular Topics Section ── */}
+      {/* ── Section 4: Popular Topics Section (#FFFFFF) ── */}
       <section className="blog-topics-section section-pad" ref={topicsRef}>
         <div className="container">
           <div className="blog-topics-card">
