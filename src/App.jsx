@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import CartSidebar from './components/CartSidebar';
-import ScrollToTop from './components/ScrollToTop';
+
 import Preloader from './components/Preloader';
 import HomePage from './pages/HomePage';
 import MenuPage from './pages/MenuPage';
@@ -106,7 +106,7 @@ function App() {
         <Route path="*"        element={<NotFoundPage />} />
       </Routes>
       <Footer />
-      <ScrollToTop />
+
     </BrowserRouter>
   );
 }

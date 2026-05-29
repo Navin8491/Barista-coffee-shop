@@ -310,37 +310,7 @@ p {
   color: #fff;
 }
 
-/* ── Scroll-to-top button ── */
-#scroll-top-btn {
-  position: fixed;
-  bottom: 40px;
-  right: 40px;
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: var(--gold);
-  color: #fff;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-md);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.4s, transform 0.4s;
-  z-index: 999;
-}
 
-#scroll-top-btn.visible {
-  opacity: 1;
-  pointer-events: all;
-}
-
-#scroll-top-btn:hover {
-  background: var(--dark);
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-lg);
-}
 
 /* ── Preloader ── */
 .preloader {
