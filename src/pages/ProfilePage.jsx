@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import './ProfilePage.css';
@@ -7,9 +7,13 @@ import './ProfilePage.css';
 export default function ProfilePage() {
   const { user, profile, logout, updateProfile, updatePassword } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
+  const [favorites, setFavorites] = useState([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('orders');
   
   // Edit Profile States
   const [editing, setEditing] = useState(false);
@@ -24,7 +28,16 @@ export default function ProfilePage() {
   const [passError, setPassError] = useState('');
   const [passSuccess, setPassSuccess] = useState('');
 
-  // Fetch orders and items
+  // Handle Hash/Tab navigation
+  useEffect(() => {
+    if (location.hash === '#favorites') {
+      setActiveTab('favorites');
+    } else {
+      setActiveTab('orders');
+    }
+  }, [location.hash]);
+
+  // Fetch orders and favorites
   useEffect(() => {
     if (!user) return;
     
@@ -60,7 +73,35 @@ export default function ProfilePage() {
       }
     };
 
+    const fetchFavorites = async () => {
+      setFavoritesLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('favorites')
+          .select(`
+            id,
+            product_id,
+            products (
+              id,
+              name,
+              price,
+              image_url,
+              category
+            )
+          `)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+        setFavorites(data || []);
+      } catch (err) {
+        console.error('Error fetching favorites:', err);
+      } finally {
+        setFavoritesLoading(false);
+      }
+    };
+
     fetchOrders();
+    fetchFavorites();
   }, [user]);
 
   // Set default edit fields
@@ -160,6 +201,21 @@ export default function ProfilePage() {
       alert(err.message || 'Failed to upload profile picture.');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleRemoveFavorite = async (favId) => {
+    try {
+      const { error } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('id', favId);
+
+      if (error) throw error;
+      setFavorites((prev) => prev.filter((fav) => fav.id !== favId));
+    } catch (err) {
+      console.error('Error removing favorite:', err);
+      alert('Failed to remove favorite.');
     }
   };
 
@@ -335,72 +391,154 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Right Side: Order history */}
-        <div className="orders-history">
-          <div>
-            <h2 className="orders-title">Your Order History</h2>
-            <p className="orders-subtitle">Track and view details of your previous coffee orders</p>
+        {/* Right Side: Main Content with tabs */}
+        <div className="profile-main-content">
+          <div className="profile-tabs">
+            <button
+              className={`profile-tab ${activeTab === 'orders' ? 'active' : ''}`}
+              onClick={() => setActiveTab('orders')}
+            >
+              📦 Order History
+            </button>
+            <button
+              className={`profile-tab ${activeTab === 'favorites' ? 'active' : ''}`}
+              onClick={() => setActiveTab('favorites')}
+            >
+              ❤️ My Favorites
+            </button>
           </div>
 
-          {ordersLoading ? (
-            <div>
-              <div className="skeleton skeleton-card" />
-              <div className="skeleton skeleton-card" />
-            </div>
-          ) : orders.length === 0 ? (
-            <div className="no-orders">
-              <span className="no-orders-icon">☕</span>
-              <h3>No Orders Found</h3>
-              <p>You haven't placed any delicious orders yet.</p>
-              <button
-                className="btn btn-primary"
-                onClick={() => navigate('/menu')}
-                style={{ marginTop: '1rem' }}
-              >
-                Explore Menu
-              </button>
-            </div>
-          ) : (
-            orders.map((order) => {
-              const statusBadge = (status) => {
-                const s = status.toLowerCase();
-                return `order-status-badge status-${s}`;
-              };
-              return (
-                <div key={order.id} className="order-card card">
-                  <div className="order-header">
-                    <div className="order-id-date">
-                      <span className="order-id">Order ID: #{order.id.slice(0, 8)}</span>
-                      <span className="order-date">{formatDate(order.created_at)}</span>
-                    </div>
-                    <span className={statusBadge(order.order_status)}>
-                      {order.order_status}
-                    </span>
-                  </div>
+          {activeTab === 'orders' && (
+            <div className="orders-history">
+              <div>
+                <h2 className="orders-title">Your Order History</h2>
+                <p className="orders-subtitle">Track and view details of your previous coffee orders</p>
+              </div>
 
-                  <div className="order-items-list">
-                    {order.order_items.map((item) => (
-                      <div key={item.id} className="order-item-row">
-                        <div>
-                          <span className="order-item-name">{item.products?.name || 'Item'}</span>
-                          <span className="order-item-qty">x{item.quantity}</span>
-                        </div>
-                        <span className="order-item-price">${(item.price * item.quantity).toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="order-footer">
-                    <span className="order-payment-method">
-                      Payment Method: <strong>{order.payment_method}</strong>
-                    </span>
-                    <span className="order-total-amount">
-                      Total: ${order.total_amount.toFixed(2)}
-                    </span>
-                  </div>
+              {ordersLoading ? (
+                <div>
+                  <div className="skeleton skeleton-card" />
+                  <div className="skeleton skeleton-card" />
                 </div>
-              );
-            })
+              ) : orders.length === 0 ? (
+                <div className="no-orders">
+                  <span className="no-orders-icon">☕</span>
+                  <h3>No Orders Found</h3>
+                  <p>You haven't placed any delicious orders yet.</p>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => navigate('/menu')}
+                    style={{ marginTop: '1rem' }}
+                  >
+                    Explore Menu
+                  </button>
+                </div>
+              ) : (
+                orders.map((order) => {
+                  const statusBadge = (status) => {
+                    const s = status.toLowerCase();
+                    return `order-status-badge status-${s}`;
+                  };
+                  return (
+                    <div key={order.id} className="order-card card">
+                      <div className="order-header">
+                        <div className="order-id-date">
+                          <span className="order-id">Order ID: #{order.id.slice(0, 8)}</span>
+                          <span className="order-date">{formatDate(order.created_at)}</span>
+                        </div>
+                        <span className={statusBadge(order.order_status)}>
+                          {order.order_status}
+                        </span>
+                      </div>
+
+                      <div className="order-items-list">
+                        {order.order_items.map((item) => (
+                          <div key={item.id} className="order-item-row">
+                            <div>
+                              <span className="order-item-name">{item.products?.name || 'Item'}</span>
+                              <span className="order-item-qty">x{item.quantity}</span>
+                            </div>
+                            <span className="order-item-price">${(item.price * item.quantity).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="order-footer">
+                        <span className="order-payment-method">
+                          Payment Method: <strong>{order.payment_method}</strong>
+                        </span>
+                        <span className="order-total-amount">
+                          Total: ${order.total_amount.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+
+          {activeTab === 'favorites' && (
+            <div className="favorites-tab-content">
+              <div>
+                <h2 className="orders-title">My Favorites</h2>
+                <p className="orders-subtitle">View and manage your favorited coffee products</p>
+              </div>
+
+              {favoritesLoading ? (
+                <div className="favorites-grid">
+                  <div className="skeleton skeleton-card" style={{ height: '240px' }} />
+                  <div className="skeleton skeleton-card" style={{ height: '240px' }} />
+                </div>
+              ) : favorites.length === 0 ? (
+                <div className="no-orders">
+                  <span className="no-orders-icon">❤️</span>
+                  <h3>No Favorites Added</h3>
+                  <p>Your wishlist is empty. Start adding some favorite products!</p>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => navigate('/menu')}
+                    style={{ marginTop: '1rem' }}
+                  >
+                    Go to Menu
+                  </button>
+                </div>
+              ) : (
+                <div className="favorites-grid">
+                  {favorites.map((fav) => (
+                    <div key={fav.id} className="favorite-card card">
+                      <img
+                        src={fav.products?.image_url || 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=300&q=80'}
+                        alt={fav.products?.name}
+                        className="favorite-card__img"
+                      />
+                      <div className="favorite-card__body">
+                        <span className="favorite-card__category">{fav.products?.category}</span>
+                        <h3 className="favorite-card__title">{fav.products?.name}</h3>
+                        <p className="favorite-card__price">${Number(fav.products?.price || 0).toFixed(2)}</p>
+                        <div className="favorite-card__actions">
+                          <button
+                            className="btn btn-primary btn-sm"
+                            onClick={() => navigate('/menu')}
+                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                          >
+                            Order Now
+                          </button>
+                          <button
+                            className="btn btn-outline btn-sm remove-fav-btn"
+                            onClick={() => handleRemoveFavorite(fav.id)}
+                            style={{ padding: '0.4rem', fontSize: '0.8rem' }}
+                            title="Remove"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

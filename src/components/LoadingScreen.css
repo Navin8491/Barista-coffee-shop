@@ -1,0 +1,111 @@
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cream);
+  z-index: 9999;
+  font-family: var(--font-body);
+}
+
+.loading-screen__container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.loading-screen__spinner {
+  position: relative;
+  width: 100px;
+  height: 90px;
+}
+
+/* Coffee Cup Animation */
+.loading-screen__cup {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cup-body {
+  width: 60px;
+  height: 50px;
+  background: var(--primary);
+  border-radius: 0 0 30px 30px;
+  position: relative;
+  border: 3px solid var(--espresso);
+}
+
+.handle {
+  position: absolute;
+  right: -15px;
+  top: 10px;
+  width: 15px;
+  height: 25px;
+  border: 3px solid var(--espresso);
+  border-left: none;
+  border-radius: 0 12px 12px 0;
+  background: var(--cream);
+}
+
+/* Steam animation */
+.steam {
+  display: inline-block;
+  width: 3px;
+  height: 15px;
+  background: var(--gold);
+  margin: 0 2px;
+  border-radius: 3px;
+  animation: steam-rise 1.5s infinite ease-in-out;
+  opacity: 0;
+}
+
+.steam:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.steam:nth-child(2) {
+  animation-delay: 0.4s;
+}
+
+.steam:nth-child(3) {
+  animation-delay: 0.7s;
+}
+
+@keyframes steam-rise {
+  0% {
+    transform: translateY(0) scaleY(0.5);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-15px) scaleY(1.2);
+    opacity: 0;
+  }
+}
+
+.loading-screen__text {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  color: var(--dark);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  animation: text-pulse 1.8s infinite ease-in-out;
+}
+
+@keyframes text-pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}

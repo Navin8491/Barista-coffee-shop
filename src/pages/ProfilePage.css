@@ -282,3 +282,134 @@
     gap: 2.5rem;
   }
 }
+
+/* Tabs styling */
+.profile-tabs {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 2px solid rgba(181, 106, 45, 0.1);
+  margin-bottom: 2rem;
+  padding-bottom: 0.5rem;
+}
+
+.profile-tab {
+  background: transparent;
+  border: none;
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--coffee);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--transition);
+}
+
+.profile-tab:hover {
+  color: var(--gold);
+}
+
+.profile-tab.active {
+  color: var(--primary);
+}
+
+.profile-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--primary);
+  border-radius: 3px 3px 0 0;
+}
+
+/* Favorites Grid */
+.favorites-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.favorite-card {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(181, 106, 45, 0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.favorite-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.favorite-card__img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.favorite-card__body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.favorite-card__category {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gold);
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.favorite-card__title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  color: var(--dark);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+.favorite-card__price {
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.favorite-card__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  align-items: center;
+}
+
+.favorite-card__actions .btn {
+  flex-grow: 1;
+  text-align: center;
+  justify-content: center;
+}
+
+.remove-fav-btn {
+  flex-grow: 0 !important;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-color: rgba(200, 30, 30, 0.3) !important;
+  color: #c81e1e !important;
+}
+
+.remove-fav-btn:hover {
+  background: #fdf2f2 !important;
+  border-color: #c81e1e !important;
+}
+

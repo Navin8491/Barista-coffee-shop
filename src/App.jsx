@@ -41,7 +41,7 @@ function ProtectedRoute({ children }) {
   const location = useLocation();
 
   if (loading) {
-    return <Preloader />;
+    return <LoadingScreen />;
   }
 
   if (!user) {
@@ -55,7 +55,7 @@ function AppContent() {
   const [cartItems, setCartItems] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [toast, setToast] = useState({ message: '', show: false });
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
   /* Show toast helper */
   const showToast = useCallback((msg) => {
@@ -65,6 +65,7 @@ function AppContent() {
 
   /* Sync Cart from Database on Login */
   useEffect(() => {
+    if (loading) return;
     if (!user) {
       setCartItems([]);
       return;
@@ -196,6 +197,10 @@ function AppContent() {
   }, [user]);
 
   const cartCount = cartItems.reduce((sum, i) => sum + i.qty, 0);
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <BrowserRouter>
