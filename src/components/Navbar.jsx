@@ -48,15 +48,6 @@ export default function Navbar({ cartCount, onCartOpen }) {
           </div>
         </Link>
 
-        {/* Phone (desktop) */}
-        <div className="navbar__phone">
-          <span className="navbar__phone-icon">📞</span>
-          <div>
-            <span className="navbar__phone-label">{siteInfo.phoneLabel}</span>
-            <a href={`tel:${siteInfo.phone}`} className="navbar__phone-num">{siteInfo.phone}</a>
-          </div>
-        </div>
-
         {/* Navigation links */}
         <nav className={`navbar__nav${menuOpen ? ' navbar__nav--open' : ''}`}>
           {navLinks.map((link) => (
@@ -68,10 +59,6 @@ export default function Navbar({ cartCount, onCartOpen }) {
               {link.label}
             </Link>
           ))}
-          {/* Mobile phone */}
-          <div className="navbar__phone navbar__phone--mobile">
-            <a href={`tel:${siteInfo.phone}`}>{siteInfo.phone}</a>
-          </div>
         </nav>
 
         {/* Cart + Hamburger */}

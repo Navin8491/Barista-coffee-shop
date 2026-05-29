@@ -75,49 +75,6 @@
   margin-top: 2px;
 }
 
-/* Phone */
-.navbar__phone {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-shrink: 0;
-  border-left: 1px solid rgba(217, 194, 167, 0.4);
-  padding-left: 1.5rem;
-  margin-left: 1rem;
-}
-
-.navbar--transparent .navbar__phone {
-  border-left-color: rgba(255, 255, 255, 0.2);
-}
-
-.navbar__phone-icon {
-  font-size: 1.1rem;
-}
-
-.navbar__phone-label {
-  display: block;
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: var(--gray-500);
-  font-weight: 500;
-}
-
-.navbar__phone-num {
-  display: block;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--dark);
-}
-
-.navbar--transparent .navbar__phone-num {
-  color: #fff;
-}
-
-.navbar__phone--mobile {
-  display: none;
-}
-
 /* Nav links */
 .navbar__nav {
   display: flex;
@@ -274,12 +231,6 @@
 }
 
 /* ── Responsive ── */
-@media (max-width: 992px) {
-  .navbar__phone {
-    display: none;
-  }
-}
-
 @media (max-width: 768px) {
   .navbar .container {
     padding-right: 0.75rem; /* tighten right edge so hamburger sits flush */
@@ -363,19 +314,6 @@
     color: var(--gold) !important;
   }
 
-  .navbar__phone--mobile {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 1.5rem;
-    border-bottom: none;
-  }
-
-  .navbar__phone--mobile a {
-    color: var(--gold);
-    font-weight: 600;
-    font-size: 1.15rem;
-  }
 }
 
 /* Ensure menu elements have contrast when mobile menu is open */
