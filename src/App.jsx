@@ -22,6 +22,7 @@ import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
+import LoadingScreen from './components/LoadingScreen';
 
 /* Scroll to top on route change */
 function RouteScrollReset() {
