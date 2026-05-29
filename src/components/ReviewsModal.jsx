@@ -38,8 +38,8 @@ export default function ReviewsModal({ isOpen, onClose, productId, productName, 
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
 
-      console.log("Reviews:", data);
-      console.log("Reviews Error:", error);
+      console.log("DATA:", data);
+      console.log("ERROR:", error);
 
       if (error) throw error;
       setReviews(data || []);

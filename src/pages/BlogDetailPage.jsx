@@ -62,8 +62,8 @@ export default function BlogDetailPage() {
           .eq('id', id)
           .single();
 
-        console.log("Blog post data fetched:", currentData);
-        console.log("Blog post error (if any):", currentError);
+        console.log("DATA:", currentData);
+        console.log("ERROR:", currentError);
 
         if (currentError) throw currentError;
 
@@ -89,8 +89,8 @@ export default function BlogDetailPage() {
           .from('blogs')
           .select('*');
 
-        console.log("All blogs data fetched:", listData);
-        console.log("All blogs error (if any):", listError);
+        console.log("DATA:", listData);
+        console.log("ERROR:", listError);
 
         if (listError) throw listError;
 

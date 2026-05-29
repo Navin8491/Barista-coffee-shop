@@ -38,8 +38,8 @@ export default function ProductCard({ product, onAddToCart }) {
         .select('rating')
         .eq('product_id', product.id);
 
-      console.log(`Reviews for product ${product.id}:`, revData);
-      console.log(`Reviews Error for product ${product.id}:`, revError);
+      console.log("DATA:", revData);
+      console.log("ERROR:", revError);
 
       if (revError) throw revError;
 

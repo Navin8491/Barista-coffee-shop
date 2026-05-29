@@ -66,8 +66,8 @@ export default function BlogPage() {
           .select('*')
           .order('created_at', { ascending: false });
 
-        console.log("Blogs data fetched:", data);
-        console.log("Blogs error (if any):", error);
+        console.log("DATA:", data);
+        console.log("ERROR:", error);
 
         if (error) throw error;
         setBlogsList(data || []);

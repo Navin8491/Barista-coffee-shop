@@ -17,8 +17,8 @@ export function AuthProvider({ children }) {
         .eq('user_id', userId)
         .maybeSingle();
 
-      console.log("Profiles:", data);
-      console.log("Profiles Error:", error);
+      console.log("DATA:", data);
+      console.log("ERROR:", error);
 
       if (error) {
         console.error('Error fetching profile:', error);

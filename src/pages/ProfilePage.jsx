@@ -65,8 +65,8 @@ export default function ProfilePage() {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
-        console.log("Orders:", data);
-        console.log("Orders Error:", error);
+        console.log("DATA:", data);
+        console.log("ERROR:", error);
 
         if (error) throw error;
         setOrders(data || []);
@@ -96,8 +96,8 @@ export default function ProfilePage() {
           `)
           .eq('user_id', user.id);
 
-        console.log("Favorites:", data);
-        console.log("Favorites Error:", error);
+        console.log("DATA:", data);
+        console.log("ERROR:", error);
 
         if (error) throw error;
         setFavorites(data || []);
