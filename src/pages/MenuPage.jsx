@@ -22,19 +22,22 @@ export default function MenuPage({ onAddToCart }) {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        console.log("Fetching products from Supabase...");
+        console.log("Before Products Fetch");
         const { data, error } = await supabase
           .from('products')
           .select('*')
           .order('name');
-        
-        console.log("DATA:", data);
-        console.log("ERROR:", error);
-        
-        if (error) throw error;
+
+        console.log("After Products Fetch");
+        console.log("Products Data:", data);
+        console.log("Products Error:", error);
+
+        if (error) {
+          throw error;
+        }
         setDbProducts(data || []);
-      } catch (err) {
-        console.error('Error fetching products:', err);
+      } catch (error) {
+        console.error("Products Fetch Error:", error);
       } finally {
         setLoading(false);
       }

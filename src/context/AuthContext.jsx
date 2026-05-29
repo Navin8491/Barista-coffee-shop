@@ -34,64 +34,63 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let active = true;
 
-    // Safety timeout to prevent infinite loading screen
-    const safetyTimeout = setTimeout(() => {
-      if (active) {
-        console.warn('Auth initialization timed out. Forcing loading to complete.');
-        setLoading(false);
-      }
-    }, 4000);
-
-    const initAuth = async () => {
+    const initializeAuth = async () => {
       try {
         console.log("Auth Initialization Started");
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           console.log("Session User Found:", session.user.email);
-          setUser(session.user);
-          const p = await fetchProfile(session.user.id);
-          setProfile(p);
+          if (active) {
+            setUser(session.user);
+            const p = await fetchProfile(session.user.id);
+            setProfile(p);
+          }
         } else {
           console.log("No Session User Found");
+          if (active) {
+            setUser(null);
+            setProfile(null);
+          }
         }
-      } catch (err) {
-        console.error("Auth Initialization Error:", err);
+      } catch (error) {
+        console.error("Auth Initialization Error:", error);
       } finally {
         if (active) {
           setLoading(false);
-          clearTimeout(safetyTimeout);
           console.log("Auth Initialization Complete");
         }
       }
     };
 
-    initAuth();
+    initializeAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth State Changed Event:", event);
       try {
         if (session?.user) {
-          setUser(session.user);
-          const p = await fetchProfile(session.user.id);
-          setProfile(p);
+          if (active) {
+            setUser(session.user);
+            const p = await fetchProfile(session.user.id);
+            setProfile(p);
+          }
         } else {
-          setUser(null);
-          setProfile(null);
+          if (active) {
+            setUser(null);
+            setProfile(null);
+          }
         }
-      } catch (err) {
-        console.error("Auth State Change Error:", err);
+      } catch (error) {
+        console.error("Auth State Change Error:", error);
       } finally {
         if (active) {
           setLoading(false);
-          clearTimeout(safetyTimeout);
         }
       }
     });
 
     return () => {
       active = false;
-      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
   }, []);
