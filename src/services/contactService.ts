@@ -17,21 +17,19 @@ export const contactService = {
   async submitMessage(message: ContactMessage): Promise<ServiceResponse<ContactMessage>> {
     console.log("Fetch start: submitContactMessage");
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('contact_messages')
         .insert({
           name: message.name,
           email: message.email,
           subject: message.subject || '',
           message: message.message
-        })
-        .select('*')
-        .single();
+        });
 
       if (error) throw error;
 
       console.log("Fetch complete: submitContactMessage success");
-      return { data: data as ContactMessage, error: null };
+      return { data: null, error: null };
     } catch (err: any) {
       console.error("Fetch error: submitContactMessage failed", err);
       return { data: null, error: err };
