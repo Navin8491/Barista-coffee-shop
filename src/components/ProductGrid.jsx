@@ -11,45 +11,49 @@ export default function ProductGrid({ products = [], onAddToCart, title, subtitl
   const headerRef   = useRef(null);
   const cardsRef    = useRef([]);
 
+  const productIds = products.map((p) => p.id).join(',');
+
   useEffect(() => {
-    /* Header reveal */
-    if (headerRef.current) {
-      gsap.fromTo(
-        headerRef.current,
-        { y: 50, opacity: 0 },
-        {
-          y: 0, opacity: 1, duration: 0.75, ease: 'power3.out',
-          scrollTrigger: {
-            trigger: headerRef.current,
-            start: 'top 85%',
-            once: true,
-          },
-        }
-      );
-    }
+    const ctx = gsap.context(() => {
+      /* Header reveal */
+      if (headerRef.current) {
+        gsap.fromTo(
+          headerRef.current,
+          { y: 50, opacity: 0 },
+          {
+            y: 0, opacity: 1, duration: 0.75, ease: 'power3.out',
+            scrollTrigger: {
+              trigger: headerRef.current,
+              start: 'top 85%',
+              once: true,
+            },
+          }
+        );
+      }
 
-    /* Card stagger */
-    const cards = cardsRef.current.filter(Boolean);
-    if (cards.length > 0) {
-      gsap.fromTo(
-        cards,
-        { y: 60, opacity: 0 },
-        {
-          y: 0, opacity: 1,
-          duration: 0.65,
-          stagger: 0.12,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 80%',
-            once: true,
-          },
-        }
-      );
-    }
+      /* Card stagger */
+      const cards = cardsRef.current.filter(Boolean);
+      if (cards.length > 0) {
+        gsap.fromTo(
+          cards,
+          { y: 60, opacity: 0 },
+          {
+            y: 0, opacity: 1,
+            duration: 0.65,
+            stagger: 0.12,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: 'top 80%',
+              once: true,
+            },
+          }
+        );
+      }
+    }, sectionRef);
 
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
-  }, [products, loading, error]);
+    return () => ctx.revert();
+  }, [productIds, loading, error]);
 
   return (
     <section ref={sectionRef} className="product-grid__section section-pad">
