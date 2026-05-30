@@ -102,7 +102,9 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
       const { error: orderError } = await orderService.createOrder({
         userId: user.id,
         total: total,
-        items: itemsToOrder
+        items: itemsToOrder,
+        userEmail: profile?.email,
+        userName: profile?.full_name
       });
 
       if (orderError) throw orderError;

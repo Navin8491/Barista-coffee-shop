@@ -8,6 +8,8 @@ export interface CartItem {
   product_id: number;
   quantity: number;
   created_at: string;
+  user_name?: string | null;
+  user_email?: string | null;
   products?: Product; // Nested relation from Supabase JOIN
 }
 
@@ -37,7 +39,13 @@ export const cartService = {
   /**
    * Adds an item to the user's cart (or increments quantity if already exists)
    */
-  async addToCart(userId: string, productId: number, quantity: number = 1): Promise<ServiceResponse<CartItem>> {
+  async addToCart(
+    userId: string, 
+    productId: number, 
+    quantity: number = 1, 
+    userEmail?: string | null, 
+    userName?: string | null
+  ): Promise<ServiceResponse<CartItem>> {
     console.log("Fetch start: addToCart product", productId, "quantity", quantity);
     try {
       // 1. Check if the item already exists in the cart
@@ -50,11 +58,15 @@ export const cartService = {
       if (selectError) throw selectError;
 
       if (existingItems && existingItems.length > 0) {
-        // 2. If exists, update quantity
+        // 2. If exists, update quantity, email, and name
         const newQuantity = existingItems[0].quantity + quantity;
         const { data, error } = await supabase
           .from('cart_items')
-          .update({ quantity: newQuantity })
+          .update({ 
+            quantity: newQuantity,
+            user_email: userEmail || null,
+            user_name: userName || null
+          })
           .eq('id', existingItems[0].id)
           .select('*, products:product_id(*)')
           .single();
@@ -69,7 +81,9 @@ export const cartService = {
           .insert({
             user_id: userId,
             product_id: productId,
-            quantity: quantity
+            quantity: quantity,
+            user_email: userEmail || null,
+            user_name: userName || null
           })
           .select('*, products:product_id(*)')
           .single();

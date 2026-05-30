@@ -31,13 +31,15 @@ export interface CreateOrderParams {
     quantity: number;
     price: number;
   }[];
+  userEmail?: string | null;
+  userName?: string | null;
 }
 
 export const orderService = {
   /**
    * Places a new order and inserts all related order items
    */
-  async createOrder({ userId, total, items }: CreateOrderParams): Promise<ServiceResponse<Order>> {
+  async createOrder({ userId, total, items, userEmail, userName }: CreateOrderParams): Promise<ServiceResponse<Order>> {
     console.log("Fetch start: createOrder for user", userId, "total", total);
     try {
       const orderNumber = `BC-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -50,7 +52,9 @@ export const orderService = {
           order_number: orderNumber,
           total: total,
           status: 'Pending',
-          payment_status: 'Unpaid'
+          payment_status: 'Unpaid',
+          user_email: userEmail || null,
+          user_name: userName || null
         })
         .select('*')
         .single();

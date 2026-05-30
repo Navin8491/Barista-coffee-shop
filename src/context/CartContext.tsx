@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import { useProfile } from './ProfileContext';
 import { cartService, CartItem as DbCartItem } from '../services/cartService';
 
 export interface CartProduct {
@@ -28,6 +29,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [cartItems, setCartItems] = useState<CartProduct[]>([]);
   const [cartLoading, setCartLoading] = useState<boolean>(false);
 
@@ -90,7 +92,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     try {
-      const { data, error } = await cartService.addToCart(user.id, product.id, qty);
+      const { data, error } = await cartService.addToCart(
+        user.id, 
+        product.id, 
+        qty, 
+        profile?.email, 
+        profile?.full_name
+      );
       if (error) throw error;
       await fetchCart(); // Sync from DB to ensure IDs are correctly aligned
     } catch (err) {

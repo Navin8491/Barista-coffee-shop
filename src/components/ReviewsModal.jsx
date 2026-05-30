@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../context/ProfileContext';
 import { reviewService } from '../services/reviewService';
 import './ReviewsModal.css';
 
 export default function ReviewsModal({ isOpen, onClose, productId, productName, onReviewSubmitted }) {
   const { user } = useAuth();
+  const { profile } = useProfile();
   
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +68,9 @@ export default function ReviewsModal({ isOpen, onClose, productId, productName, 
         userId: user.id,
         productId,
         rating,
-        review: text
+        review: text,
+        userEmail: profile?.email,
+        userName: profile?.full_name
       });
 
       if (error) throw error;

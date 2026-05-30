@@ -36,14 +36,21 @@ export const favoriteService = {
   /**
    * Adds a product to the user's favorites
    */
-  async addFavorite(userId: string, productId: number): Promise<ServiceResponse<Favorite>> {
+  async addFavorite(
+    userId: string, 
+    productId: number,
+    userEmail?: string | null,
+    userName?: string | null
+  ): Promise<ServiceResponse<Favorite>> {
     console.log("Fetch start: addFavorite product", productId);
     try {
       const { data, error } = await supabase
         .from('favorites')
         .insert({
           user_id: userId,
-          product_id: productId
+          product_id: productId,
+          user_email: userEmail || null,
+          user_name: userName || null
         })
         .select('*, products:product_id(*)')
         .single();

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { useProfile } from './ProfileContext';
 import { favoriteService, Favorite } from '../services/favoriteService';
 
 interface FavoriteContextType {
@@ -15,6 +16,7 @@ const FavoriteContext = createContext<FavoriteContextType | undefined>(undefined
 
 export const FavoriteProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [favoritesLoading, setFavoritesLoading] = useState<boolean>(false);
 
@@ -71,7 +73,12 @@ export const FavoriteProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
         setFavorites(prev => [placeholder, ...prev]);
 
-        const { data, error } = await favoriteService.addFavorite(user.id, productId);
+        const { data, error } = await favoriteService.addFavorite(
+          user.id, 
+          productId, 
+          profile?.email, 
+          profile?.full_name
+        );
         if (error) {
           setFavorites(prev => prev.filter(fav => fav.product_id !== productId));
           throw error;

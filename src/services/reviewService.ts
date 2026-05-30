@@ -21,6 +21,8 @@ export interface CreateReviewParams {
   productId: number;
   rating: number;
   review: string;
+  userEmail?: string | null;
+  userName?: string | null;
 }
 
 export const reviewService = {
@@ -49,7 +51,7 @@ export const reviewService = {
   /**
    * Inserts a new review for a product
    */
-  async createReview({ userId, productId, rating, review }: CreateReviewParams): Promise<ServiceResponse<Review>> {
+  async createReview({ userId, productId, rating, review, userEmail, userName }: CreateReviewParams): Promise<ServiceResponse<Review>> {
     console.log("Fetch start: createReview by user", userId, "rating", rating);
     try {
       if (rating < 1 || rating > 5) {
@@ -61,7 +63,9 @@ export const reviewService = {
           user_id: userId,
           product_id: productId,
           rating,
-          review
+          review,
+          user_email: userEmail || null,
+          user_name: userName || null
         })
         .select('*, profiles:user_id(full_name, avatar_url)')
         .single();
