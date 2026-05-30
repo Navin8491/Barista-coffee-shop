@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { gsap } from 'gsap';
-import { supabase } from '../lib/supabaseClient';
+import { blogService } from '../services/blogService';
 import './BlogDetailPage.css';
 
 const getAuthorInfo = (id) => {
@@ -49,29 +49,21 @@ export default function BlogDetailPage() {
   const [copied, setCopied] = useState(false);
 
   // Fetch current post and all posts on mount / id change
-  // Fetch current post and all posts on mount / id change
   useEffect(() => {
     const fetchPostDetails = async () => {
+      console.log(`Fetch start: blog details for id ${id}`);
       setLoading(true);
       try {
-        console.log("Before Blog Detail Fetch");
         // Fetch current post
-        const { data: currentData, error: currentError } = await supabase
-          .from('blogs')
-          .select('*')
-          .eq('id', id)
-          .single();
+        const { data: currentData, error: currentError } = await blogService.getBlogById(Number(id));
 
-        console.log("After Blog Detail Fetch");
-        console.log("Blog Detail Data:", currentData);
-        console.log("Blog Detail Error:", currentError);
-
-        if (currentError) {
-          throw currentError;
-        }
+        if (currentError) throw currentError;
 
         if (currentData) {
           const authInfo = getAuthorInfo(currentData.id);
+          const dynamicExcerpt = (currentData.content && currentData.content.length > 0)
+            ? (currentData.content[0].body.slice(0, 150) + '...')
+            : '';
           setPost({
             id: currentData.id,
             title: currentData.title,
@@ -79,32 +71,26 @@ export default function BlogDetailPage() {
             date: formatBlogDate(currentData.created_at),
             author: authInfo.name,
             authorAvatar: authInfo.avatar,
-            excerpt: currentData.short_description || '',
+            excerpt: dynamicExcerpt,
             image: currentData.image_url,
             readTime: getReadTime(currentData.content),
-            fullContent: Array.isArray(currentData.content) ? currentData.content : [],
+            fullContent: currentData.content || [],
           });
         }
+        console.log("Fetch complete: blog details");
 
         // Fetch all posts for related section
-        console.log("Before Related Blogs Fetch");
-        const { data: listData, error: listError } = await supabase
-          .from('blogs')
-          .select('*');
+        console.log("Fetch start: related blogs");
+        const { data: listData, error: listError } = await blogService.getBlogs();
 
-        console.log("After Related Blogs Fetch");
-        console.log("Related Blogs Data:", listData);
-        console.log("Related Blogs Error:", listError);
-
-        if (listError) {
-          throw listError;
-        }
+        if (listError) throw listError;
 
         if (listData) {
           const mapped = listData.map((b) => {
             const authInfo = getAuthorInfo(b.id);
             return {
               id: b.id,
+              slug: b.slug,
               title: b.title,
               category: b.category,
               author: authInfo.name,
@@ -114,9 +100,11 @@ export default function BlogDetailPage() {
           });
           setAllBlogs(mapped);
         }
+        console.log("Fetch complete: related blogs");
       } catch (err) {
-        console.error('Error fetching blog details:', err);
+        console.error('Fetch error: blog details failed', err);
         setPost(null);
+        setAllBlogs([]);
       } finally {
         setLoading(false);
       }
@@ -151,7 +139,6 @@ export default function BlogDetailPage() {
     const diffCat = allBlogs.filter((p) => p.id !== post.id && p.category !== post.category);
     return [...sameCat, ...diffCat].slice(0, 3);
   }, [post, allBlogs]);
-
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -262,7 +249,7 @@ export default function BlogDetailPage() {
                 className="bd-share-btn tw"
                 aria-label="Share on Twitter"
               >
-                𝕏
+                𕾖
               </a>
               <button 
                 onClick={handleCopyLink} 

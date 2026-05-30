@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabaseClient';
+import { useProfile } from '../context/ProfileContext';
+import { useFavorites } from '../context/FavoriteContext';
+import { orderService } from '../services/orderService';
 import './ProfilePage.css';
 
 export default function ProfilePage() {
-  const { user, profile, logout, updateProfile, updatePassword } = useAuth();
+  const { user, logout, updatePassword } = useAuth();
+  const { profile, profileLoading, updateProfile, uploadAvatar } = useProfile();
+  const { favorites, favoritesLoading, removeFavoriteById } = useFavorites();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
-  const [favorites, setFavorites] = useState([]);
-  const [favoritesLoading, setFavoritesLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('orders');
   
   // Edit Profile States
@@ -37,85 +39,27 @@ export default function ProfilePage() {
     }
   }, [location.hash]);
 
-  // Fetch orders and favorites
+  // Fetch orders from database
   useEffect(() => {
     if (!user) return;
     
     const fetchOrders = async () => {
+      console.log("Fetch start: orders");
       setOrdersLoading(true);
       try {
-        console.log("Before Orders Fetch");
-        const { data, error } = await supabase
-          .from('orders')
-          .select(`
-            id,
-            total_amount,
-            payment_method,
-            order_status,
-            created_at,
-            order_items (
-              id,
-              quantity,
-              price,
-              products (
-                name
-              )
-            )
-          `)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        console.log("After Orders Fetch");
-        console.log("Orders Data:", data);
-        console.log("Orders Error:", error);
-
-        if (error) {
-          throw error;
-        }
+        const { data, error } = await orderService.getUserOrders(user.id);
+        if (error) throw error;
         setOrders(data || []);
+        console.log("Fetch complete: orders. Count:", data?.length);
       } catch (error) {
-        console.error('Error fetching orders:', error);
+        console.error('Fetch error: orders failed', error);
+        setOrders([]); // Fallback to empty state, do not block app
       } finally {
         setOrdersLoading(false);
       }
     };
 
-    const fetchFavorites = async () => {
-      setFavoritesLoading(true);
-      try {
-        console.log("Before Favorites Fetch");
-        const { data, error } = await supabase
-          .from('favorites')
-          .select(`
-            id,
-            product_id,
-            products (
-              id,
-              name,
-              price,
-              image_url,
-              category
-            )
-          `)
-          .eq('user_id', user.id);
-
-        console.log("After Favorites Fetch");
-        console.log("Favorites Data:", data);
-        console.log("Favorites Error:", error);
-
-        if (error) {
-          throw error;
-        }
-        setFavorites(data || []);
-      } catch (error) {
-        console.error('Error fetching favorites:', error);
-      } finally {
-        setFavoritesLoading(false);
-      }
-    };
-
     fetchOrders();
-    fetchFavorites();
   }, [user]);
 
   // Set default edit fields
@@ -191,30 +135,9 @@ export default function ProfilePage() {
       return;
     }
 
-    const fileExt = file.name.split('.').pop();
-    const filePath = `${user.id}/${Date.now()}_avatar.${fileExt}`;
-
     setUpdating(true);
     try {
-      // 1. Upload to bucket
-      console.log("Before Avatar Upload");
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, { cacheControl: '3600', upsert: true });
-
-      console.log("After Avatar Upload");
-      console.log("Avatar Upload Data:", uploadData);
-      console.log("Avatar Upload Error:", uploadError);
-
-      if (uploadError) throw uploadError;
-
-      // 2. Get Public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      // 3. Update Profiles Table
-      await updateProfile({ avatar_url: publicUrl });
+      await uploadAvatar(file);
     } catch (err) {
       console.error('Error uploading avatar:', err);
       alert(err.message || 'Failed to upload profile picture.');
@@ -225,19 +148,7 @@ export default function ProfilePage() {
 
   const handleRemoveFavorite = async (favId) => {
     try {
-      console.log("Before Favorite Remove");
-      const { data, error } = await supabase
-        .from('favorites')
-        .delete()
-        .eq('id', favId)
-        .select();
-
-      console.log("After Favorite Remove");
-      console.log("Favorite Remove Data:", data);
-      console.log("Favorite Remove Error:", error);
-
-      if (error) throw error;
-      setFavorites((prev) => prev.filter((fav) => fav.id !== favId));
+      await removeFavoriteById(favId);
     } catch (err) {
       console.error('Error removing favorite:', err);
       alert('Failed to remove favorite.');
@@ -249,7 +160,7 @@ export default function ProfilePage() {
     return new Date(dateStr).toLocaleDateString('en-US', opt);
   };
 
-  if (!user || !profile) {
+  if (!user || profileLoading || !profile) {
     return (
       <main className="profile-page">
         <div className="container profile-grid">
@@ -468,16 +379,16 @@ export default function ProfilePage() {
                     <div key={order.id} className="order-card card">
                       <div className="order-header">
                         <div className="order-id-date">
-                          <span className="order-id">Order ID: #{order.id.slice(0, 8)}</span>
+                          <span className="order-id">Order Number: {order.order_number}</span>
                           <span className="order-date">{formatDate(order.created_at)}</span>
                         </div>
-                        <span className={statusBadge(order.order_status)}>
-                          {order.order_status}
+                        <span className={statusBadge(order.status)}>
+                          {order.status}
                         </span>
                       </div>
 
                       <div className="order-items-list">
-                        {order.order_items.map((item) => (
+                        {order.order_items?.map((item) => (
                           <div key={item.id} className="order-item-row">
                             <div>
                               <span className="order-item-name">{item.products?.name || 'Item'}</span>
@@ -490,10 +401,10 @@ export default function ProfilePage() {
 
                       <div className="order-footer">
                         <span className="order-payment-method">
-                          Payment Method: <strong>{order.payment_method}</strong>
+                          Payment Status: <strong>{order.payment_status}</strong>
                         </span>
                         <span className="order-total-amount">
-                          Total: ${order.total_amount.toFixed(2)}
+                          Total: ${Number(order.total || 0).toFixed(2)}
                         </span>
                       </div>
                     </div>

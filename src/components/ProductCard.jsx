@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useFavorites } from '../context/FavoriteContext';
+import { reviewService } from '../services/reviewService';
 import ReviewsModal from './ReviewsModal';
 import './ProductCard.css';
 
@@ -25,23 +26,16 @@ function getBadgeClass(tag) {
 
 export default function ProductCard({ product, onAddToCart }) {
   const { user } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorites();
   
   const [avgRating, setAvgRating] = useState(product.rating || 5);
   const [reviewCount, setReviewCount] = useState(0);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const fetchProductStats = async () => {
+  const fetchProductStats = useCallback(async () => {
+    console.log(`Fetch start: product stats for product ${product.id}`);
     try {
-      console.log("Before Product Reviews Fetch");
-      const { data: revData, error: revError } = await supabase
-        .from('reviews')
-        .select('rating')
-        .eq('product_id', product.id);
-
-      console.log("After Product Reviews Fetch");
-      console.log("Product Reviews Data:", revData);
-      console.log("Product Reviews Error:", revError);
+      const { data: revData, error: revError } = await reviewService.getReviewsForProduct(product.id);
 
       if (revError) throw revError;
 
@@ -54,36 +48,19 @@ export default function ProductCard({ product, onAddToCart }) {
         setAvgRating(product.rating || 5);
         setReviewCount(0);
       }
-
-      // 2. Fetch favorite status
-      if (user) {
-        console.log("Before Product Favorite Fetch");
-        const { data: favData, error: favError } = await supabase
-          .from('favorites')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('product_id', product.id)
-          .maybeSingle();
-
-        console.log("After Product Favorite Fetch");
-        console.log("Product Favorite Data:", favData);
-        console.log("Product Favorite Error:", favError);
-
-        if (favError) throw favError;
-        setIsFavorite(!!favData);
-      } else {
-        setIsFavorite(false);
-      }
+      console.log("Fetch complete: product stats");
     } catch (err) {
-      console.error('Error fetching product stats:', err);
+      console.error('Fetch error: product stats', err);
+      setAvgRating(product.rating || 5);
+      setReviewCount(0);
     }
-  };
+  }, [product.id, product.rating]);
 
   useEffect(() => {
     fetchProductStats();
-  }, [product.id, user]);
+  }, [fetchProductStats]);
 
-  const handleToggleFavorite = async (e) => {
+  const handleToggleFavoriteClick = async (e) => {
     e.stopPropagation();
     if (!user) {
       alert('Please sign in to add favorites!');
@@ -91,46 +68,17 @@ export default function ProductCard({ product, onAddToCart }) {
     }
 
     try {
-      if (isFavorite) {
-        console.log("Before Favorite Delete");
-        const { data, error } = await supabase
-          .from('favorites')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('product_id', product.id)
-          .select();
-
-        console.log("After Favorite Delete");
-        console.log("Favorite Delete Data:", data);
-        console.log("Favorite Delete Error:", error);
-
-        if (error) throw error;
-        setIsFavorite(false);
-      } else {
-        console.log("Before Favorite Insert");
-        const { data, error } = await supabase
-          .from('favorites')
-          .insert({
-            user_id: user.id,
-            product_id: product.id,
-          })
-          .select();
-
-        console.log("After Favorite Insert");
-        console.log("Favorite Insert Data:", data);
-        console.log("Favorite Insert Error:", error);
-
-        if (error) throw error;
-        setIsFavorite(true);
-      }
+      await toggleFavorite(product.id);
     } catch (err) {
       console.error('Error toggling favorite:', err);
+      alert(err.message || 'Failed to toggle favorite.');
     }
   };
 
   const productPrice = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
   const originalPrice = product.originalPrice ? (typeof product.originalPrice === 'string' ? parseFloat(product.originalPrice) : product.originalPrice) : null;
   const productImg = product.image_url || product.image;
+  const favorited = isFavorite(product.id);
 
   return (
     <>
@@ -150,9 +98,9 @@ export default function ProductCard({ product, onAddToCart }) {
 
           {/* Favorite button */}
           <button
-            className={`product-card__favorite${isFavorite ? ' active' : ''}`}
-            onClick={handleToggleFavorite}
-            aria-label={isFavorite ? `Remove ${product.name} from favorites` : `Add ${product.name} to favorites`}
+            className={`product-card__favorite${favorited ? ' active' : ''}`}
+            onClick={handleToggleFavoriteClick}
+            aria-label={favorited ? `Remove ${product.name} from favorites` : `Add ${product.name} to favorites`}
           >
             ❤️
           </button>
@@ -209,4 +157,3 @@ export default function ProductCard({ product, onAddToCart }) {
     </>
   );
 }
-

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { supabase } from '../lib/supabaseClient';
+import { blogService } from '../services/blogService';
 import './BlogPage.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -55,27 +55,18 @@ export default function BlogPage() {
   const categories = ['All', 'Brewing Tips', 'Coffee Culture', 'Recipes', 'Cafe Stories', 'Reviews', 'Barista Guides'];
   const popularTopics = ['Espresso', 'Latte Art', 'Coffee Beans', 'Brewing', 'Specialty Coffee', 'Cafe Lifestyle'];
 
-  // Fetch blogs from Supabase
+  // Fetch blogs using blogService
   useEffect(() => {
     const fetchBlogs = async () => {
+      console.log("Fetch start: blogs");
       setLoading(true);
       try {
-        console.log("Before Blogs Fetch");
-        const { data, error } = await supabase
-          .from('blogs')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        console.log("After Blogs Fetch");
-        console.log("Blogs Data:", data);
-        console.log("Blogs Error:", error);
-
-        if (error) {
-          throw error;
-        }
+        const { data, error } = await blogService.getBlogs();
+        if (error) throw error;
         setBlogsList(data || []);
       } catch (error) {
-        console.error("Blogs Fetch Error:", error);
+        console.error("Fetch error: blogs failed", error);
+        setBlogsList([]);
       } finally {
         setLoading(false);
       }
@@ -99,6 +90,9 @@ export default function BlogPage() {
     return blogsList
       .map((post) => {
         const authorInfo = getAuthorInfo(post.id);
+        const dynamicExcerpt = (post.content && post.content.length > 0)
+          ? (post.content[0].body.slice(0, 150) + '...')
+          : '';
         return {
           id: post.id,
           slug: post.slug,
@@ -107,7 +101,7 @@ export default function BlogPage() {
           date: formatBlogDate(post.created_at),
           author: authorInfo.name,
           authorAvatar: authorInfo.avatar,
-          excerpt: post.short_description || '',
+          excerpt: dynamicExcerpt,
           image: post.image_url,
           readTime: getReadTime(post.content),
         };
@@ -121,7 +115,6 @@ export default function BlogPage() {
         return matchesCategory && matchesSearch;
       });
   }, [blogsList, activeCategory, searchQuery]);
-
 
   // Split into Featured and Grid posts
   const featuredPost = filteredPosts[0];
@@ -144,7 +137,7 @@ export default function BlogPage() {
         { y: 0, opacity: 1, duration: 0.55, stagger: 0.08, ease: 'power2.out', overwrite: 'auto' }
       );
     }
-  }, [filteredPosts.length, activeCategory, searchQuery]);
+  }, [filteredPosts.length, activeCategory, searchQuery, featuredPost]);
 
   // Quote scroll reveal
   useEffect(() => {
@@ -184,7 +177,7 @@ export default function BlogPage() {
       });
     });
 
-    // 2. Mouse Move Drift
+    // 2. Mouse Drift
     const handleMouseMove = (e) => {
       const { clientX, clientY } = e;
       const xPos = (clientX / window.innerWidth - 0.5) * 35;
@@ -203,7 +196,7 @@ export default function BlogPage() {
 
   return (
     <main className="blog-page">
-      {/* ── Ambient Background Layering ── */}
+      {/* ambient background layer */}
       <div className="blog-decorations-container">
         <div className="blog-decor float-1" data-parallax-speed="0.25">☕</div>
         <div className="blog-decor float-2" data-parallax-speed="0.45">🌱</div>
@@ -215,9 +208,7 @@ export default function BlogPage() {
         <div className="blog-bg-glow glow-3" />
       </div>
 
-      {/* ── Section 1: Hero & Filters (#FCF8F4 with Gradient) ── */}
       <section className="blog-section-1">
-        {/* Magazine Hero */}
         <div className="blog-hero" ref={heroRef}>
           <div className="blog-hero__overlay" />
           <div className="container blog-hero__inner">
@@ -227,7 +218,6 @@ export default function BlogPage() {
               Explore brewing guides, coffee culture, barista secrets, and cafe stories.
             </p>
             
-            {/* Search Bar */}
             <div className="blog-search-bar" data-hero-anim>
               <span className="blog-search-bar__icon">🔍</span>
               <input
@@ -250,7 +240,6 @@ export default function BlogPage() {
           </div>
         </div>
 
-        {/* Filter Tabs */}
         <div className="blog-filters-section">
           <div className="container">
             <div className="blog-filters">
@@ -268,7 +257,6 @@ export default function BlogPage() {
         </div>
       </section>
 
-      {/* ── Section 2: Featured Article (#FFFDFB) ── */}
       {filteredPosts.length > 0 && featuredPost && (
         <section className="blog-featured-section section-pad">
           <div className="container">
@@ -299,7 +287,6 @@ export default function BlogPage() {
         </section>
       )}
 
-      {/* ── Section 3: Articles Grid Feed (#F8F1EA) ── */}
       <section className="blog-feed-section section-pad">
         <div className="container">
           {loading ? (
@@ -350,7 +337,7 @@ export default function BlogPage() {
                         </div>
                       </article>
 
-                      {/* Coffee Quote Breakout - Injected dynamically after the 2nd grid card */}
+                      {/* Coffee Quote Breakout injected after 2nd grid card */}
                       {idx === 1 && (
                         <div className="blog-quote" ref={quoteRef}>
                           <div className="blog-quote__inner">
@@ -369,7 +356,6 @@ export default function BlogPage() {
         </div>
       </section>
 
-      {/* ── Section 4: Popular Topics Section (#FFFFFF) ── */}
       <section className="blog-topics-section section-pad" ref={topicsRef}>
         <div className="container">
           <div className="blog-topics-card">

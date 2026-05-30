@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import HeroSlider from '../components/HeroSlider';
 import ProductGrid from '../components/ProductGrid';
 import { testimonials } from '../data/siteData';
-import { supabase } from '../lib/supabaseClient';
+import { useProducts } from '../context/ProductContext';
 import './HomePage.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -182,38 +182,7 @@ function CtaBanner() {
 }
 
 export default function HomePage({ onAddToCart }) {
-  const [dbProducts, setDbProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(null);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      setFetchError(null);
-      try {
-        console.log("Before Products Fetch");
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .order('name');
-
-        console.log("After Products Fetch");
-        console.log("Products Data:", data);
-        console.log("Products Error:", error);
-
-        if (error) {
-          throw error;
-        }
-        setDbProducts(data || []);
-      } catch (error) {
-        console.error("Products Fetch Error:", error);
-        setFetchError("Unable to load products.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
+  const { products: dbProducts, productsLoading: loading, error: fetchError } = useProducts();
 
   return (
     <main>

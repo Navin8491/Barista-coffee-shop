@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabaseClient';
+import { reviewService } from '../services/reviewService';
 import './ReviewsModal.css';
 
 export default function ReviewsModal({ isOpen, onClose, productId, productName, onReviewSubmitted }) {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,32 +17,15 @@ export default function ReviewsModal({ isOpen, onClose, productId, productName, 
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
 
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     if (!productId) return;
+    console.log(`Fetch start: reviews for product ${productId}`);
     setLoading(true);
     try {
-      console.log("Before Reviews Fetch");
-      const { data, error } = await supabase
-        .from('reviews')
-        .select(`
-          id,
-          rating,
-          review_text,
-          created_at,
-          user_id,
-          profiles (
-            full_name,
-            avatar_url
-          )
-        `)
-        .eq('product_id', productId)
-        .order('created_at', { ascending: false });
-
-      console.log("After Reviews Fetch");
-      console.log("Reviews Data:", data);
-      console.log("Reviews Error:", error);
+      const { data, error } = await reviewService.getReviewsForProduct(productId);
 
       if (error) throw error;
+      console.log("Fetch complete: reviews");
       setReviews(data || []);
 
       // Pre-fill user's existing review if any
@@ -50,15 +33,16 @@ export default function ReviewsModal({ isOpen, onClose, productId, productName, 
         const myReview = data.find((r) => r.user_id === user.id);
         if (myReview) {
           setRating(myReview.rating);
-          setText(myReview.review_text || '');
+          setText(myReview.review || '');
         }
       }
     } catch (err) {
-      console.error('Error fetching reviews:', err);
+      console.error('Fetch error: reviews', err);
+      setReviews([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId, user]);
 
   useEffect(() => {
     if (isOpen) {
@@ -66,36 +50,27 @@ export default function ReviewsModal({ isOpen, onClose, productId, productName, 
       setFormError('');
       setFormSuccess('');
     }
-  }, [isOpen, productId, user]);
+  }, [isOpen, fetchReviews]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) return;
     
+    console.log("Fetch start: submit review");
     setFormError('');
     setFormSuccess('');
     setSubmitting(true);
 
     try {
-      console.log("Before Review Submit");
-      const { data, error } = await supabase
-        .from('reviews')
-        .upsert(
-          {
-            user_id: user.id,
-            product_id: productId,
-            rating,
-            review_text: text,
-          },
-          { onConflict: 'user_id,product_id' }
-        )
-        .select();
-
-      console.log("After Review Submit");
-      console.log("Review Submit Data:", data);
-      console.log("Review Submit Error:", error);
+      const { error } = await reviewService.createReview({
+        userId: user.id,
+        productId,
+        rating,
+        review: text
+      });
 
       if (error) throw error;
+      console.log("Fetch complete: submit review");
       
       setFormSuccess('Review saved successfully!');
       fetchReviews();
@@ -108,7 +83,7 @@ export default function ReviewsModal({ isOpen, onClose, productId, productName, 
         setFormSuccess('');
       }, 2000);
     } catch (err) {
-      console.error('Error submitting review:', err);
+      console.error('Fetch error: submit review', err);
       setFormError(err.message || 'Failed to submit review.');
     } finally {
       setSubmitting(false);
@@ -188,7 +163,7 @@ export default function ReviewsModal({ isOpen, onClose, productId, productName, 
                             </span>
                           ))}
                         </div>
-                        {rev.review_text && <p className="review-item__text">{rev.review_text}</p>}
+                        {rev.review && <p className="review-item__text">{rev.review}</p>}
                       </div>
                     </div>
                   );

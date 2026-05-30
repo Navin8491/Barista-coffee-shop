@@ -3,7 +3,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import ProductCard from '../components/ProductCard';
 import { menuCategories } from '../data/siteData';
-import { supabase } from '../lib/supabaseClient';
+import { useProducts } from '../context/ProductContext';
 import './MenuPage.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -11,43 +11,10 @@ gsap.registerPlugin(ScrollTrigger);
 export default function MenuPage({ onAddToCart }) {
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [dbProducts, setDbProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(null);
+  const { products: dbProducts, productsLoading: loading, error: fetchError } = useProducts();
   
   const gridRef = useRef(null);
   const headerRef = useRef(null);
-
-  // Fetch products from database
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      setFetchError(null);
-      try {
-        console.log("Before Products Fetch");
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .order('name');
-
-        console.log("After Products Fetch");
-        console.log("Products Data:", data);
-        console.log("Products Error:", error);
-
-        if (error) {
-          throw error;
-        }
-        setDbProducts(data || []);
-      } catch (error) {
-        console.error("Products Fetch Error:", error);
-        setFetchError("Unable to load products.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
 
   // Filter products by category and search term
   const filtered = dbProducts.filter((p) => {
@@ -164,4 +131,3 @@ export default function MenuPage({ onAddToCart }) {
     </>
   );
 }
-

@@ -1,12 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabaseClient';
+import { useProfile } from '../context/ProfileContext';
+import { orderService } from '../services/orderService';
 import './CheckoutPage.css';
 
 export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClearCart }) {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const { profile } = useProfile();
+  const navigate = useNavigate();
   const pageRef = useRef(null);
   const cardRef = useRef(null);
   const formRef = useRef(null);
@@ -22,8 +25,6 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
     paymentMethod: 'Credit Card'
   });
 
-  const [orderPlaced, setOrderPlaced] = useState(false);
-  const [orderSummary, setOrderSummary] = useState({ items: [], total: 0, paymentMethod: 'Credit Card' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -31,19 +32,20 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
   const shipping = cartItems.length > 0 ? 5.00 : 0;
   const total = subtotal + shipping;
 
-  // Pre-populate name and email from profile
+  // Pre-populate name, email and phone from profile
   useEffect(() => {
     if (profile) {
       setFormData((prev) => ({
         ...prev,
         fullName: profile.full_name || '',
         email: profile.email || '',
+        phone: profile.phone || '',
       }));
     }
   }, [profile]);
 
   useEffect(() => {
-    if (orderPlaced || cartItems.length === 0) {
+    if (cartItems.length === 0) {
       gsap.fromTo(pageRef.current, { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' });
       return;
     }
@@ -75,7 +77,7 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
       { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.2)' },
       "-=0.2"
     );
-  }, [cartItems.length, orderPlaced]);
+  }, [cartItems.length]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -85,59 +87,35 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
     e.preventDefault();
     if (!user) return;
 
+    console.log("Fetch start: place order");
     setError('');
     setLoading(true);
 
     try {
-      // 1. Create order
-      console.log("Before Order Insert");
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user.id,
-          total_amount: total,
-          payment_method: formData.paymentMethod,
-          order_status: 'Pending'
-        })
-        .select()
-        .single();
-
-      console.log("After Order Insert");
-      console.log("Order Insert Data:", orderData);
-      console.log("Order Insert Error:", orderError);
-
-      if (orderError) throw orderError;
-
-      // 2. Create order items
-      const orderItems = cartItems.map((item) => ({
-        order_id: orderData.id,
-        product_id: item.id,
+      const itemsToOrder = cartItems.map((item) => ({
+        productId: item.id,
         quantity: item.qty,
         price: item.price
       }));
 
-      console.log("Before Order Items Insert");
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems)
-        .select();
-
-      console.log("After Order Items Insert");
-      console.log("Order Items Insert Data:", itemsData);
-      console.log("Order Items Insert Error:", itemsError);
-
-      if (itemsError) throw itemsError;
-
-      // 3. Update state and clear cart
-      setOrderSummary({
-        items: [...cartItems],
+      // Create order via orderService
+      const { error: orderError } = await orderService.createOrder({
+        userId: user.id,
         total: total,
-        paymentMethod: formData.paymentMethod
+        items: itemsToOrder
       });
-      setOrderPlaced(true);
-      onClearCart();
+
+      if (orderError) throw orderError;
+
+      console.log("Fetch complete: place order");
+
+      // Clear cart
+      await onClearCart();
+
+      // Redirect safely to Profile page (where order history will refresh on mount)
+      navigate('/profile#orders');
     } catch (err) {
-      console.error('Error placing order:', err);
+      console.error('Fetch error: place order', err);
       setError(err.message || 'Failed to place order. Please try again.');
     } finally {
       setLoading(false);
@@ -155,57 +133,6 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
   const buttonClick = (e) => {
     gsap.to(e.currentTarget, { scale: 0.97, duration: 0.1, yoyo: true, repeat: 1 });
   };
-
-  if (orderPlaced) {
-    return (
-      <main className="checkout-page" ref={pageRef}>
-        <div className="container">
-          <div className="checkout-success-card card">
-            <span className="checkout-success-icon">🎉</span>
-            <h2>Order Placed Successfully!</h2>
-            <p className="checkout-success-msg">Thank you, <strong>{formData.fullName || 'Valued Customer'}</strong>. Your delicious coffee is being crafted right now.</p>
-            
-            <div className="checkout-success-details">
-              <h3>Receipt Summary</h3>
-              <div className="checkout-success-items">
-                {orderSummary.items.map((item) => (
-                  <div key={item.id} className="checkout-success-item">
-                    <span>{item.qty}x {item.name}</span>
-                    <span>${(item.price * item.qty).toFixed(2)}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="checkout-success-total">
-                <span>Total Paid via ({orderSummary.paymentMethod})</span>
-                <strong>${orderSummary.total.toFixed(2)}</strong>
-              </div>
-            </div>
-
-            <div className="checkout-success-meta">
-              <div className="meta-box">
-                <span className="meta-label">Est. Readiness</span>
-                <strong className="meta-value">15–20 Mins</strong>
-              </div>
-              <div className="meta-box">
-                <span className="meta-label">Pick Up Location</span>
-                <strong className="meta-value">123 Coffee St, Milan</strong>
-              </div>
-            </div>
-
-            <Link 
-              to="/menu" 
-              className="btn btn-primary"
-              onMouseEnter={buttonHover}
-              onMouseLeave={buttonLeave}
-              onMouseDown={buttonClick}
-            >
-              Order More Delicacies
-            </Link>
-          </div>
-        </div>
-      </main>
-    );
-  }
 
   if (cartItems.length === 0) {
     return (
@@ -379,4 +306,3 @@ export default function CheckoutPage({ cartItems, onRemove, onUpdateQty, onClear
     </main>
   );
 }
-

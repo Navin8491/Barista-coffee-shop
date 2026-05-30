@@ -35,7 +35,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await signUp(email, password, fullName);
+      await signUp({ email, password, fullName });
       setSuccess('Account created successfully! Redirecting...');
       setTimeout(() => {
         navigate('/profile');

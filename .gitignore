@@ -30,5 +30,7 @@ dist-ssr
 
 # Agent files
 .agents/
+.agent/
+.claude/
 skills-lock.json
 

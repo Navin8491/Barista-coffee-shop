@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { siteInfo } from '../data/siteData';
-import { supabase } from '../lib/supabaseClient';
+import { contactService } from '../services/contactService';
 import './ContactPage.css';
 
 export default function ContactPage() {
@@ -35,37 +35,25 @@ export default function ContactPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Fetch start: submit contact message");
     setLoading(true);
     setError('');
     
     try {
-      console.log("Before Contact Message Insert");
-      const { data, error: dbError } = await supabase
-        .from('contact_messages')
-        .insert({
-          name: form.name,
-          email: form.email,
-          subject: form.subject,
-          message: form.message
-        })
-        .select();
-
-      console.log("After Contact Message Insert");
-      console.log("Contact Message Data:", data);
-      console.log("Contact Message Error:", dbError);
+      const { error: dbError } = await contactService.submitMessage(form);
 
       if (dbError) throw dbError;
 
+      console.log("Fetch complete: submit contact message");
       setSubmitted(true);
       setForm({ name: '', email: '', subject: '', message: '' });
     } catch (err) {
-      console.error('Error submitting contact form:', err);
+      console.error('Fetch error: submit contact message failed', err);
       setError(err.message || 'Failed to send message. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-
 
   return (
     <>

@@ -30,9 +30,9 @@ async function run() {
       console.error("Supabase SELECT Error:", error);
     } else {
       console.log("Supabase SELECT Success. Products fetched count:", data.length);
-      if (data.length > 0) {
-        console.log("First Product Name:", data[0].name);
-      }
+      data.forEach(p => {
+        console.log(`Product: "${p.name}", Category: "${p.category}"`);
+      });
     }
   } catch (err) {
     console.error("Runtime exception:", err);
