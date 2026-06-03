@@ -1,0 +1,243 @@
+/* Inactivity Auto-Logout Warning Modal Styles */
+
+.auto-logout-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 10, 12, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+  animation: fadeInOverlay 0.3s ease-out forwards;
+}
+
+.auto-logout-modal {
+  background: rgba(26, 26, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 
+              0 0 80px rgba(212, 163, 89, 0.05); /* Soft gold ambient glow */
+  border-radius: 24px;
+  width: 90%;
+  max-width: 440px;
+  padding: 40px 32px;
+  text-align: center;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: scaleUpModal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Animated Pulse Security Icon */
+.auto-logout-icon-container {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(212, 163, 89, 0.1);
+  color: #d4a359; /* Accent gold */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.auto-logout-icon {
+  width: 32px;
+  height: 32px;
+  animation: floatIcon 3s ease-in-out infinite;
+}
+
+.auto-logout-pulse-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(212, 163, 89, 0.4);
+  animation: pulseRing 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+/* Typography */
+.auto-logout-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 12px;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.auto-logout-description {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #a0a0ab;
+  margin-bottom: 28px;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Digital Countdown */
+.auto-logout-countdown {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.auto-logout-time-number {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  line-height: 1;
+  background: linear-gradient(135deg, #ffffff 0%, #d4a359 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 4px 20px rgba(212, 163, 89, 0.15);
+}
+
+.auto-logout-time-unit {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #d4a359;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Progress Track and Bar */
+.auto-logout-progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 36px;
+}
+
+.auto-logout-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #d4a359 0%, #f3c68f 100%);
+  border-radius: 99px;
+  transition: width 1s linear; /* Smooth linear transition as seconds count down */
+}
+
+/* Pulse progress bar red when less than 10 seconds */
+.auto-logout-progress-bar.warning-pulse {
+  background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+  animation: barPulse 1s ease-in-out infinite alternate;
+}
+
+/* Actions */
+.auto-logout-actions {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+}
+
+.btn-stay-logged-in {
+  flex: 1.3;
+  padding: 14px 20px;
+  background: #d4a359;
+  color: #121215;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(212, 163, 89, 0.25);
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-stay-logged-in:hover {
+  background: #e2b470;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(212, 163, 89, 0.35);
+}
+
+.btn-stay-logged-in:active {
+  transform: translateY(0);
+}
+
+.btn-logout-now {
+  flex: 1;
+  padding: 14px 20px;
+  background: transparent;
+  color: #a0a0ab;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-logout-now:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-logout-now:active {
+  transform: translateY(0);
+}
+
+/* Keyframes */
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUpModal {
+  from {
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes floatIcon {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes pulseRing {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+@keyframes barPulse {
+  from {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+  }
+}

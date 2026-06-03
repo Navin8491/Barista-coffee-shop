@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import CartSidebar from './components/CartSidebar';
@@ -26,6 +26,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
 import LoadingScreen from './components/LoadingScreen';
+import AutoLogoutWarningModal from './components/AutoLogoutWarningModal';
 
 /* Scroll to top on route change */
 function RouteScrollReset() {
@@ -57,6 +58,8 @@ function ProtectedRoute({ children }) {
 
 function AppContent() {
   const { cartItems, cartCount, addToCart, removeFromCart, updateQty, clearCart } = useCart();
+  const { wasAutoLoggedOut, setWasAutoLoggedOut } = useAuth();
+  const navigate = useNavigate();
   const [cartOpen, setCartOpen] = useState(false);
   const [toast, setToast] = useState({ message: '', show: false });
 
@@ -65,6 +68,15 @@ function AppContent() {
     setToast({ message: msg, show: true });
     setTimeout(() => setToast({ message: '', show: false }), 2500);
   }, []);
+
+  /* Watch for auto-logout event to redirect and notify */
+  useEffect(() => {
+    if (wasAutoLoggedOut) {
+      showToast('🔒 You have been logged out due to inactivity.');
+      navigate('/login');
+      setWasAutoLoggedOut(false);
+    }
+  }, [wasAutoLoggedOut, navigate, showToast, setWasAutoLoggedOut]);
 
   /* Add to cart with toast */
   const handleAddToCart = useCallback(async (product) => {
@@ -105,6 +117,7 @@ function AppContent() {
         onUpdateQty={updateQty}
       />
       <Toast message={toast.message} show={toast.show} />
+      <AutoLogoutWarningModal />
       <Routes>
         <Route path="/"                 element={<HomePage    onAddToCart={handleAddToCart} />} />
         <Route path="/menu"             element={<MenuPage    onAddToCart={handleAddToCart} />} />

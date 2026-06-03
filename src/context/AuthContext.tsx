@@ -1,6 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { authService, RegisterParams } from '../services/authService';
+
+// Timers config (15 min total activity time before logout. Warning shows 30 seconds before that.)
+const INACTIVITY_TIMEOUT = 14.5 * 60 * 1000; // 14.5 minutes in ms
+const WARNING_COUNTDOWN_START = 30; // 30 seconds warning countdown
 
 interface AuthContextType {
   user: User | null;
@@ -10,6 +14,11 @@ interface AuthContextType {
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<any>;
   updatePassword: (password: string) => Promise<any>;
+  showLogoutWarning: boolean;
+  logoutCountdown: number;
+  wasAutoLoggedOut: boolean;
+  setWasAutoLoggedOut: (value: boolean) => void;
+  stayLoggedIn: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,6 +26,91 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showLogoutWarning, setShowLogoutWarning] = useState<boolean>(false);
+  const [logoutCountdown, setLogoutCountdown] = useState<number>(WARNING_COUNTDOWN_START);
+  const [wasAutoLoggedOut, setWasAutoLoggedOut] = useState<boolean>(false);
+
+  const inactivityTimerRef = useRef<any>(null);
+  const countdownIntervalRef = useRef<any>(null);
+  const showWarningRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    showWarningRef.current = showLogoutWarning;
+  }, [showLogoutWarning]);
+
+  const resetInactivityTimer = () => {
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+
+    inactivityTimerRef.current = setTimeout(() => {
+      setShowLogoutWarning(true);
+      startCountdown();
+    }, INACTIVITY_TIMEOUT);
+  };
+
+  const startCountdown = () => {
+    setLogoutCountdown(WARNING_COUNTDOWN_START);
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+    countdownIntervalRef.current = setInterval(() => {
+      setLogoutCountdown((prev) => {
+        if (prev <= 1) {
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+          }
+          handleAutoLogout();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleAutoLogout = async () => {
+    setWasAutoLoggedOut(true);
+    await logout();
+    setShowLogoutWarning(false);
+  };
+
+  const stayLoggedIn = () => {
+    setShowLogoutWarning(false);
+    resetInactivityTimer();
+  };
+
+  useEffect(() => {
+    if (user) {
+      resetInactivityTimer();
+
+      const activityEvents = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'];
+
+      const handleActivity = () => {
+        if (!showWarningRef.current) {
+          resetInactivityTimer();
+        }
+      };
+
+      activityEvents.forEach((event) => {
+        window.addEventListener(event, handleActivity);
+      });
+
+      return () => {
+        if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+        if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+        activityEvents.forEach((event) => {
+          window.removeEventListener(event, handleActivity);
+        });
+      };
+    } else {
+      setShowLogoutWarning(false);
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    }
+  }, [user]);
 
   useEffect(() => {
     let active = true;
@@ -78,6 +172,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     const { error } = await authService.logout();
+    setShowLogoutWarning(false);
+    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     if (error) throw error;
     setUser(null);
   };
@@ -96,7 +193,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signUp, logout, resetPassword, updatePassword }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      signUp, 
+      logout, 
+      resetPassword, 
+      updatePassword,
+      showLogoutWarning,
+      logoutCountdown,
+      wasAutoLoggedOut,
+      setWasAutoLoggedOut,
+      stayLoggedIn
+    }}>
       {children}
     </AuthContext.Provider>
   );
